@@ -12,6 +12,8 @@ This repository contains implementations of various machine learning models for 
 
 ## Directory Structure
 
+```
+.
 ├── data/
 │   ├── activity_labels.txt
 │   ├── features.txt
@@ -45,4 +47,4 @@ This repository contains implementations of various machine learning models for 
 │   ├── evaluation.py         # Script for evaluation metrics
 ├── README.md                 # This file
 └── config.yaml               # Configuration file for hyperparameters
-
+```
