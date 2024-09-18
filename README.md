@@ -46,5 +46,6 @@ This repository contains implementations of various machine learning models for 
 │   ├── preprocess.py         # Script for data preprocessing
 │   ├── evaluation.py         # Script for evaluation metrics
 ├── README.md                 # This file
+├── .gitignore                
 └── config.yaml               # Configuration file for hyperparameters
 ```
