@@ -14,13 +14,13 @@ from ray.air import session
 # %%
 train = pd.read_csv("../data/processed/train.csv")
 test = pd.read_csv("../data/processed/test.csv")
-display(train.head())
-display(test.head())
+print(train.head())
+print(test.head())
 # %%
 train = train.drop(["id"], axis=1)
 test = test.drop(["id"], axis=1)
-display(train.head())
-display(test.head())
+print(train.head())
+print(test.head())
 # %%
 # Split the data into X (features) and y (labels)
 X_train = train.drop(["label"], axis=1)
