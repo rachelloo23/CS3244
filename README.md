@@ -67,7 +67,7 @@ cd your-repository
 ### 2. Set Up a Virtual Environment Using Conda
 Create and activate a virtual environment:
 ```
-conda create -n CS3244 python=3.9
+conda create -n CS3244 python=3.11
 conda activate CS3244
 ```
 ### 3. Install Dependencies
