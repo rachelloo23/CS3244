@@ -4,32 +4,23 @@ import math
 import random
 import numpy as np
 import pandas as pd
+from sklearn import neighbors
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+import matplotlib.pyplot as plt
 # %%
-
-# Let's read the data in as a "data frame" (df), equivalent to our D = (X,y) data matrix
-train = pd.read_csv('C:/Users/Xin Rong/OneDrive - National University of Singapore/Desktop/CS3244/Group Project/CS3244_repo/data/processed/train.csv',sep=',') 
-test = pd.read_csv('C:/Users/Xin Rong/OneDrive - National University of Singapore/Desktop/CS3244/Group Project/CS3244_repo/data/processed/test.csv',sep=',') 
-
+# Reading in data
+train = pd.read_csv("../data/processed/train.csv")
+test = pd.read_csv("../data/processed/test.csv")
 
 X_train = train.iloc[:, :-2] # remove id and label col
 y_train = train[['label']] 
 
 X_test = test.iloc[:, :-2]
 y_test = test[['label']]
-# print(X_test.columns)
-
-print(y_test.count())
-#%%
-# Proportion of labels in train and test are roughly the same (1% diff)
-for col in y_test.columns:
-    print(f"Proportions for column: {col}")
-    print(y_test[col].value_counts(normalize=True))
-    print()
 
 # %%
-
-# Get the machine learning algorithm k-NN
-from sklearn import neighbors
+# Get the machine learning algorithm k-NN (using k = 1)
 
 knn = neighbors.KNeighborsClassifier(n_neighbors = 1, metric='euclidean')
 knn_model = knn.fit(X_train, y_train) 
@@ -37,13 +28,7 @@ knn_model = knn.fit(X_train, y_train)
 print('kNN accuracy for training set: %f' % knn_model.score(X_train, y_train))
 print('kNN accuracy for test set: %f' % knn_model.score(X_test, y_test))
 #%%
-
-# Choosing best k (based on accuracy)
-
-from sklearn.model_selection import cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
-import matplotlib.pyplot as plt
-
+# Choosing best k (based on 10-fold CV, accuracy)
 
 cv_scores = []
 
@@ -76,12 +61,7 @@ results_df_accuracy = pd.DataFrame({
 print(results_df_accuracy)
 # Best k is 10
 #%%
-# Choosing best k (based on f1_weighted)
-
-from sklearn.model_selection import cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
-import matplotlib.pyplot as plt
-
+# Choosing best k (based on 10-fold CV, f1_weighted)
 
 cv_scores = []
 
@@ -116,9 +96,29 @@ results_df_f1 = pd.DataFrame({
 
 print(results_df_f1)
 
+#%%
+# Choosing best k (based on Stratified 10-fold CV, accuracy)
+
+strat_kfold = StratifiedKFold(n_splits=10)
+
+# List to store cross-validation F1 scores
+cv_accuracy = []
+
+# Loop through different k values
+for k in k_range:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    accuracy = cross_val_score(knn, X_train, y_train, cv=strat_kfold, scoring='accuracy')
+    cv_accuracy.append(accuracy.mean())
+
+# Create a DataFrame to store k values and corresponding F1 scores
+results_df_f1 = pd.DataFrame({
+    'k': list(k_range),
+    'Accuracy': cv_accuracy
+})
+
+print(results_df_accuracy)
 # %%
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
+# Choosing best k (based on Stratified 10-fold CV, f1_weighted)
 
 # Stratified k-fold to ensure each fold has a similar class distribution
 strat_kfold = StratifiedKFold(n_splits=10)
@@ -139,70 +139,3 @@ results_df_f1 = pd.DataFrame({
 })
 
 print(results_df_f1)
-#%%
-strat_kfold = StratifiedKFold(n_splits=10)
-
-# List to store cross-validation F1 scores
-cv_f1_scores = []
-
-# Loop through different k values
-for k in k_range:
-    knn = KNeighborsClassifier(n_neighbors=k)
-    f1_scores = cross_val_score(knn, X_train, y_train, cv=strat_kfold, scoring='accuracy')
-    cv_f1_scores.append(f1_scores.mean())
-
-# Create a DataFrame to store k values and corresponding F1 scores
-results_df_f1 = pd.DataFrame({
-    'k': list(k_range),
-    'Accuracy': cv_f1_scores
-})
-
-print(results_df_f1)
-#%%
-
-############################################################################################################
-
-# confusion matrix
-y_train_pred = knn_model.predict(X_train)
-y_test_pred = knn_model.predict(X_test)
-
-from sklearn.metrics import confusion_matrix
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-# Confusion matrix for the test set
-cm = confusion_matrix(y_test, y_test_pred)
-
-# Visualizing the confusion matrix as a heatmap
-plt.figure(figsize=(8,6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=True, yticklabels=True)
-plt.xlabel('Predicted Labels')
-plt.ylabel('True Labels')
-plt.title('Confusion Matrix for Test Set')
-plt.show()
-#%%
-
-import numpy as np
-from collections import Counter
-
-# Calculate the misclassification flag
-test_errors = y_test != y_test_pred
-
-# Count misclassifications by true label
-error_counts = Counter(y_test[test_errors])
-
-# Count the total number of instances for each label in y_test
-total_counts = Counter(y_test)
-
-# Calculate error rates for each class
-error_rates = {label: error_counts.get(label, 0) / total_counts[label] for label in total_counts}
-
-# Display error rates
-print("Class-wise error rates:", error_rates)
-
-# Visualize class-wise error rates
-plt.bar(error_rates.keys(), error_rates.values())
-plt.xlabel('Class')
-plt.ylabel('Error Rate')
-plt.title('Class-wise Error Rates')
-plt.show()
