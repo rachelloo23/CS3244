@@ -139,3 +139,10 @@ results_df_f1 = pd.DataFrame({
 })
 
 print(results_df_f1)
+#%%
+# Run knn with optimal k
+knn = neighbors.KNeighborsClassifier(n_neighbors = 10, metric='euclidean')
+knn_model = knn.fit(X_train, y_train) 
+
+print('kNN accuracy for training set: %f' % knn_model.score(X_train, y_train))
+print('kNN accuracy for test set: %f' % knn_model.score(X_test, y_test))
