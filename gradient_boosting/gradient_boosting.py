@@ -1,16 +1,24 @@
 # %%
 import numpy as np
 import xgboost as xgb
+import random
 import pandas as pd
 import os
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import accuracy_score, mean_absolute_error, f1_score, confusion_matrix, classification_report, make_scorer, r2_score
 import ray
 from ray import tune
+from ray.train import RunConfig
 from ray.tune.schedulers import ASHAScheduler
 from xgboost import XGBClassifier
 from sklearn.model_selection import KFold, cross_val_score
 from ray.air import session
+# %%
+#Set random seed
+random_seed = 31
+np.random.seed(random_seed)
+random.seed(random_seed)
+os.environ['PYTHONHASHSEED'] = str(random_seed)
 # %%
 train = pd.read_csv("../data/processed/train.csv")
 test = pd.read_csv("../data/processed/test.csv")
@@ -31,7 +39,7 @@ X_test = test.drop(["label"], axis=1)
 
 # %%
 param_dist_xgb = {
-    "n_estimators": tune.randint(10, 30),
+    "n_estimators": tune.randint(10, 40),
     "max_depth": tune.randint(3, 15),
     "learning_rate": tune.loguniform(0.001, 0.2),
     "subsample": tune.uniform(0.6, 1.0),
@@ -54,7 +62,7 @@ def objective_xgb(config):
         gamma=config["gamma"],
         reg_alpha=config["reg_alpha"],
         reg_lambda=config["reg_lambda"],
-        random_state=123
+        random_state=random_seed
     )
     scores = cross_val_score(model, X_train, y_train, cv=10, scoring=make_scorer(f1_score, average='micro'))
     # model.fit(latent_train_z, latent_train_y)
@@ -69,9 +77,10 @@ analysis_xgb = tune.Tuner(
     metric="f1",
     mode="max",
     scheduler=ASHAScheduler(),
-    num_samples=10,
+    num_samples=50,
     ),
     param_space=param_dist_xgb,
+    run_config=RunConfig(storage_path=os.path.abspath("log"), name="xgb_trial_1", log_to_file=True)
 )
 
 # %%
@@ -82,6 +91,7 @@ best_result_xgb = xgb_results.get_best_result("f1", mode="max")
 best_config_xgb = best_result_xgb.config
 
 # %%
+best_config_xgb = {'n_estimators': 37, 'max_depth': 11, 'learning_rate': 0.07743148807027894, 'subsample': 0.7420549200544598, 'colsample_bytree': 0.8999013190460016, 'gamma': 2.335146525850379e-07, 'reg_alpha': 0.005344647514524659, 'reg_lambda': 0.12400234913359398}
 print("Best hyperparameters for XGBClassifier: ", best_config_xgb)
 
 # Train the final models with the best hyperparameters
@@ -94,7 +104,8 @@ xgb_tuned = XGBClassifier(
     colsample_bytree=best_config_xgb['colsample_bytree'],
     gamma=best_config_xgb['gamma'],
     reg_alpha=best_config_xgb['reg_alpha'],
-    reg_lambda=best_config_xgb['reg_lambda']
+    reg_lambda=best_config_xgb['reg_lambda'],
+    random_state=random_seed
 )
 xgb_tuned.fit(X_train, y_train)
 
@@ -121,41 +132,41 @@ ray.shutdown()
 xgb_df.to_csv("xgb_results.csv", index=False)
 
 # %%
-# Best hyperparameters for XGBClassifier:  {'n_estimators': 25, 'max_depth': 3, 'learning_rate': 0.11382600922866078, 'subsample': 0.8887835193955859, 'colsample_bytree': 0.621090024617741, 'gamma': 0.0004938098621938259, 'reg_alpha': 2.7397283095559356e-06, 'reg_lambda': 2.00618138131514e-07}
-# XGBoost - Training set score: 0.9674
-# XGBoost - Test set score: 0.8969
+# Best hyperparameters for XGBClassifier:  {'n_estimators': 37, 'max_depth': 11, 'learning_rate': 0.07743148807027894, 'subsample': 0.7420549200544598, 'colsample_bytree': 0.8999013190460016, 'gamma': 2.335146525850379e-07, 'reg_alpha': 0.005344647514524659, 'reg_lambda': 0.12400234913359398}
+# XGBoost - Training set score: 0.9999
+# XGBoost - Test set score: 0.9099
 # XGBoost Confusion matrix
 
-#  [[485   2   9   0   0   0   0   0   0   0   0   0]
-#  [ 46 416   9   0   0   0   0   0   0   0   0   0]
-#  [  9  49 362   0   0   0   0   0   0   0   0   0]
-#  [  0   1   0 408  98   0   0   1   0   0   0   0]
-#  [  0   0   0  50 506   0   0   0   0   0   0   0]
+#  [[480   4  12   0   0   0   0   0   0   0   0   0]
+#  [ 40 426   4   0   0   0   0   0   0   0   1   0]
+#  [  8  39 373   0   0   0   0   0   0   0   0   0]
+#  [  0   0   0 422  83   0   1   1   1   0   0   0]
+#  [  0   0   0  42 514   0   0   0   0   0   0   0]
 #  [  0   0   0   0   0 545   0   0   0   0   0   0]
-#  [  2   2   1   1   0   0  17   0   0   0   0   0]
+#  [  0   2   0   1   1   0  18   0   0   0   1   0]
 #  [  0   0   0   0   0   0   0  10   0   0   0   0]
-#  [  0   0   0   0   0   0   0   0  24   0   8   0]
-#  [  0   0   0   0   0   0   0   1   0  15   0   9]
-#  [  2   0   0   2   1   0   1   1   9   0  33   0]
-#  [  1   1   0   0   0   0   1   0   0   8   1  15]]
+#  [  0   0   0   0   0   0   0   0  26   0   6   0]
+#  [  0   0   0   0   0   0   0   1   0  17   0   7]
+#  [  2   0   0   3   0   1   1   1   9   0  32   0]
+#  [  1   0   0   0   0   0   0   1   0  10   1  14]]
 
 # XGBoost Classification Report
 
 #               precision    recall  f1-score   support
 
-#            0       0.89      0.98      0.93       496
-#            1       0.88      0.88      0.88       471
-#            2       0.95      0.86      0.90       420
-#            3       0.89      0.80      0.84       508
-#            4       0.84      0.91      0.87       556
+#            0       0.90      0.97      0.93       496
+#            1       0.90      0.90      0.90       471
+#            2       0.96      0.89      0.92       420
+#            3       0.90      0.83      0.86       508
+#            4       0.86      0.92      0.89       556
 #            5       1.00      1.00      1.00       545
-#            6       0.89      0.74      0.81        23
-#            7       0.77      1.00      0.87        10
-#            8       0.73      0.75      0.74        32
-#            9       0.65      0.60      0.63        25
-#           10       0.79      0.67      0.73        49
-#           11       0.62      0.56      0.59        27
+#            6       0.90      0.78      0.84        23
+#            7       0.71      1.00      0.83        10
+#            8       0.72      0.81      0.76        32
+#            9       0.63      0.68      0.65        25
+#           10       0.78      0.65      0.71        49
+#           11       0.67      0.52      0.58        27
 
-#     accuracy                           0.90      3162
-#    macro avg       0.82      0.81      0.82      3162
-# weighted avg       0.90      0.90      0.90      3162
+#     accuracy                           0.91      3162
+#    macro avg       0.83      0.83      0.82      3162
+# weighted avg       0.91      0.91      0.91      3162
