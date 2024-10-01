@@ -377,6 +377,26 @@ print(f'Bagging kNN Accuracy: {accuracy:.4f}')
 # Print classification report
 print(classification_report(y_test_bag, y_pred_bag))
 
+# Bagging kNN Accuracy: 0.8918
+#               precision    recall  f1-score   support
+
+#            1       0.85      0.98      0.91       496
+#            2       0.87      0.92      0.90       471
+#            3       0.96      0.78      0.86       420
+#            4       0.91      0.80      0.85       508
+#            5       0.84      0.93      0.88       556
+#            6       1.00      0.99      1.00       545
+#            7       0.89      0.74      0.81        23
+#            8       1.00      0.90      0.95        10
+#            9       0.62      0.91      0.73        32
+#           10       0.61      0.80      0.69        25
+#           11       0.82      0.47      0.60        49
+#           12       0.71      0.37      0.49        27
+
+#     accuracy                           0.89      3162
+#    macro avg       0.84      0.80      0.81      3162
+# weighted avg       0.90      0.89      0.89      3162
+
 #%%
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
