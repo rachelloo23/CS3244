@@ -20,13 +20,15 @@ X_test = test.iloc[:, :-2]
 y_test = test[['label']]
 
 # %%
-# Get the machine learning algorithm k-NN (using k = 1)
+# Get the machine learning algorithm k-NN 
 
-knn = neighbors.KNeighborsClassifier(n_neighbors = 1, metric='euclidean')
+knn = neighbors.KNeighborsClassifier(n_neighbors = 7, metric='euclidean')
 knn_model = knn.fit(X_train, y_train) 
 
 print('kNN accuracy for training set: %f' % knn_model.score(X_train, y_train))
 print('kNN accuracy for test set: %f' % knn_model.score(X_test, y_test))
+# kNN accuracy for training set: 0.970388
+# kNN accuracy for test set: 0.892473
 #%%
 # Choosing best k (based on 10-fold CV, accuracy)
 
@@ -100,7 +102,7 @@ print(results_df_f1)
 #%%
 # Choosing best k (based on Stratified 10-fold CV, accuracy)
 
-strat_kfold = StratifiedKFold(n_splits=10)
+strat_kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=31)
 
 # List to store cross-validation F1 scores
 cv_accuracy = []
@@ -122,14 +124,14 @@ results_df_f1 = pd.DataFrame({
 best_k = k_range[cv_accuracy.index(max(cv_accuracy))]
 
 print(f"Best k: {best_k}")
-print(results_df_accuracy)
+
 # Best k is 10
 # %%
 # Choosing best k (based on Stratified 10-fold CV, f1_weighted)
-# random_seed = 31
+random_seed = 31
 # Stratified k-fold to ensure each fold has a similar class distribution
-# strat_kfold = StratifiedKFold(n_splits=10, shuffle = True, random_state=random_seed)
-strat_kfold = StratifiedKFold(n_splits=10)
+strat_kfold = StratifiedKFold(n_splits=10, shuffle = True, random_state=random_seed)
+# strat_kfold = StratifiedKFold(n_splits=10)
 # List to store cross-validation F1 scores
 cv_f1_scores = []
 temp_1 = []
@@ -137,7 +139,7 @@ k_range = range(1, 20)
 
 # Loop through different k values
 for k in k_range:
-    knn = KNeighborsClassifier(n_neighbors=k,  metric='manhattan')
+    knn = KNeighborsClassifier(n_neighbors=k,  metric='euclidean')
     f1_scores = cross_val_score(knn, X_train, y_train, cv=strat_kfold, scoring='f1_weighted')
     temp_1.append(f1_scores)
     cv_f1_scores.append(f1_scores.mean())
@@ -153,18 +155,24 @@ best_k = k_range[cv_f1_scores.index(max(cv_f1_scores))]
 print(f"Best k: {best_k}")
 print(results_df_f1)
 print(temp_1)
-# Best k is 
+# Best k is 5
 #%%
 # Run knn with optimal k (k = 10)
-knn = neighbors.KNeighborsClassifier(n_neighbors = 10, metric='euclidean')
+knn = neighbors.KNeighborsClassifier(n_neighbors = 5, metric='euclidean')
 knn_model = knn.fit(X_train, y_train) 
 
 print('kNN accuracy for training set: %f' % knn_model.score(X_train, y_train))
 print('kNN accuracy for test set: %f' % knn_model.score(X_test, y_test))
 #%%
-# Using Stratified K fold CV, F1_weighted score, with random seed, best: k = 1
+# Using Stratified K fold CV, F1_weighted score, with random seed
+
+# k = 1
 # kNN accuracy for training set: 1.000000
 # kNN accuracy for test set: 0.864643
+
+# k = 5
+# kNN accuracy for training set: 0.976053
+# kNN accuracy for test set: 0.884883
 
 # Best k: 1
 #      k  F1 Score (weighted)
