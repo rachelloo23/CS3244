@@ -184,15 +184,18 @@ combined_X_reduced = combined_X.drop(columns=to_drop)
 print("Dropped features:", to_drop)
 print("Original Dataframe shape: ", combined_X.shape)
 print("Reduced DataFrame shape:", combined_X_reduced.shape)
+
+# Original Dataframe shape:  (10929, 561)
+# Reduced DataFrame shape: (10929, 148)
 #%%
 # Use reduced features to test knn
 X_train, X_test, y_train, y_test = train_test_split(combined_X_reduced, combined_y, test_size=0.3, random_state=42)
 
-knn = neighbors.KNeighborsClassifier(n_neighbors = 1, metric='euclidean')
+knn = neighbors.KNeighborsClassifier(n_neighbors = 7, metric='euclidean')
 knn_model = knn.fit(X_train, y_train) 
 
-print('kNN accuracy for training set: %f' % knn_model.score(X_train, y_train))
-print('kNN accuracy for test set: %f' % knn_model.score(X_test, y_test))
+print(f1_score(y_train, knn_model.predict(X_train) , average='weighted')) # 0.9506891426737768
+print(f1_score(y_test, knn_model.predict(X_test), average='weighted')) # 0.9269573991573669
 #%%
 
 # do cv on this reduced dataset
@@ -248,31 +251,9 @@ print(temp_1)
 #%%
 
 # SVM
-# combine original test and train then split again on 70:30
-
-combined_X = combined.iloc[:, :-2] # remove id and label col
-combined_y = combined[['label']]
-
-X_train, X_test, y_train, y_test = train_test_split(combined_X, combined_y, stratify=combined_y, test_size=0.3, random_state=42)
-
-
 from sklearn.svm import SVC
-svc = SVC()
-svc.fit(X_train, y_train)
 
-from sklearn.metrics import accuracy_score
-
-print(accuracy_score(y_test, svc.predict(X_test))) # 0.9655382738639829
-print(accuracy_score(y_train, svc.predict(X_train))) # 0.9675816993464053
-
-print(f1_score(y_test, svc.predict(X_test), average='weighted')) # 0.9653944940811833
-print(f1_score(y_train, svc.predict(X_train), average='weighted')) # 0.9674525773801673
-
-#%%
-
-# SVM
-# using their train and test
-
+# using original train and test (given from dataset)
 
 ori_X_train = train.iloc[:, :-2]
 ori_y_train = train[['label']]
@@ -282,37 +263,86 @@ ori_y_test = test[['label']]
 
 svc = SVC()
 svc.fit(ori_X_train, ori_y_train)
-print(accuracy_score(ori_y_test, svc.predict(ori_X_test))) # 0.9367488931056294
-print(accuracy_score(ori_y_train, svc.predict(ori_X_train))) # 0.9716750354062057
+# print(accuracy_score(ori_y_test, svc.predict(ori_X_test))) # 0.9367488931056294
+# print(accuracy_score(ori_y_train, svc.predict(ori_X_train))) # 0.9716750354062057
 
-print(f1_score(ori_y_test, svc.predict(ori_X_test), average='weighted')) # 0.9360546876940178
-print(f1_score(ori_y_train, svc.predict(ori_X_train), average='weighted')) # 0.971551119209504
+# print(f1_score(ori_y_test, svc.predict(ori_X_test), average='weighted')) # 0.9360546876940178
+# print(f1_score(ori_y_train, svc.predict(ori_X_train), average='weighted')) # 0.971551119209504
 
 #%%
 
+# Using reduced dataset (removed high correlation features > 0.8)
+
+X_train, X_test, y_train, y_test = train_test_split(combined_X_reduced, combined_y, test_size=0.3, random_state=42)
+
+svc = SVC()
+svc.fit(X_train, y_train)
+
+print(f1_score(y_test, svc.predict(X_test), average='weighted')) # 0.959771871547412
+print(f1_score(y_train, svc.predict(X_train), average='weighted')) # 0.9749170994905294
+
+#%%
+
+# Find best variance threshold value
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import f1_score
+import numpy as np
 
-sel = VarianceThreshold(threshold=0.03)
-sel.fit(train)
+# Range of variance thresholds to try
+thresholds = np.arange(0.01, 0.2, 0.01)
 
-mask = sel.get_support()
-# print(mask)
+# Stratified K-Fold for cross-validation
+strat_kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=31)
 
+# Variable to store the best score and corresponding threshold
+best_f1_score = 0
+best_threshold = 0
+cv_f1_scores = []
 
-reduced_train = train.iloc[:, :-2].loc[: , mask]
-reduced_test = test.iloc[:, :-2].loc[:, mask]
+# Loop over different variance thresholds
+for threshold in thresholds:
+    # Perform feature selection with the given threshold
+    selector = VarianceThreshold(threshold=threshold)
+    X_high_variance = selector.fit_transform(ori_X_train)
+    
+    # Train a KNN model using cross-validation
+    knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
+    f1_scores = cross_val_score(knn, X_high_variance, y_train, cv=strat_kfold, scoring='f1_weighted')
+    
+    # Calculate the mean F1 weighted score
+    mean_f1_score = f1_scores.mean()
+    cv_f1_scores.append(mean_f1_score)
+    
+    # Keep track of the best F1 score and threshold
+    if mean_f1_score > best_f1_score:
+        best_f1_score = mean_f1_score
+        best_threshold = threshold
 
+# Print the best threshold and corresponding F1 score
+print(f"Best variance threshold: {best_threshold}")
+print(f"Best cross-validated F1 weighted score: {best_f1_score:.4f}")
 
-# reduced_X_train = reduced_train.iloc[:, :-2]
-# reduced_y_train = reduced_test.loc[:, mask]
+# Optional: Plot F1 scores across different thresholds
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10, 6))
+plt.plot(thresholds, cv_f1_scores, marker='o', color='b')
+plt.title('F1 Weighted Score vs Variance Threshold')
+plt.xlabel('Variance Threshold')
+plt.ylabel('F1 Weighted Score')
+plt.grid(True)
+plt.show()
 
-# reduced_X_test = reduced_test.iloc[:, :-2]
-# reduced_y_test = reduced_test.loc[:, mask]
+# Best variance threshold: 0.04
+# Best cross-validated F1 weighted score: 0.9523
+
 #%%
+
 from sklearn.feature_selection import VarianceThreshold
 
 # Set the threshold for variance
-threshold = 0.03
+threshold = 0.04
 
 # Initialize the VarianceThreshold object with the threshold
 selector = VarianceThreshold(threshold=threshold)
@@ -330,8 +360,8 @@ reduced_X = pd.DataFrame(X_high_variance, columns=selected_columns)
 
 
 # Check the shape of the new DataFrame to confirm the reduction in features
-# print(reduced_X.shape)
-
+print(reduced_X.shape) 
+# (7767, 386)
 
 reduced_X_train = reduced_X
 reduced_y_train = ori_y_train
@@ -344,12 +374,16 @@ knn_model = knn.fit(reduced_X_train, reduced_y_train)
 
 print('kNN accuracy for training set: %f' % knn_model.score(reduced_X_train, reduced_y_train))
 print('kNN accuracy for test set: %f' % knn_model.score(reduced_X_test, reduced_y_test))
-# kNN accuracy for training set: 0.969744
+# kNN accuracy for training set: 0.970774
 # kNN accuracy for test set: 0.890259
+
+print(f1_score(reduced_y_train, knn_model.predict(reduced_X_train) , average='weighted')) # 0.9704876645013684
+print(f1_score(reduced_y_test, knn_model.predict(reduced_X_test), average='weighted')) # 0.8885734965767056
+
 
 #%%
 
-# Bagging (after removing features with var < 0.03)
+# Bagging (after removing features with var < 0.04)
 from sklearn.ensemble import BaggingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
@@ -357,8 +391,6 @@ from sklearn.metrics import accuracy_score, classification_report
 
 # Assuming you already have X_train_new and y_train_new
 # Split the dataset into training and testing sets
-train = pd.read_csv("../data/processed/train.csv")
-test = pd.read_csv("../data/processed/test.csv")
 
 X_train_bag = reduced_X_train
 y_train_bag = reduced_y_train
@@ -408,27 +440,29 @@ print(classification_report(y_test_bag, y_pred_bag))
 
 
 # After removing low variance features
-# Bagging kNN Accuracy: 0.8909
+# Bagging kNN Accuracy: 0.8922
 #               precision    recall  f1-score   support
 
 #            1       0.86      0.98      0.91       496
-#            2       0.88      0.92      0.90       471
+#            2       0.88      0.91      0.90       471
 #            3       0.94      0.79      0.86       420
-#            4       0.90      0.80      0.84       508
+#            4       0.90      0.79      0.84       508
 #            5       0.83      0.92      0.87       556
 #            6       1.00      0.99      1.00       545
-#            7       0.89      0.74      0.81        23
+#            7       0.94      0.74      0.83        23
 #            8       1.00      1.00      1.00        10
-#            9       0.64      0.91      0.75        32
-#           10       0.66      0.84      0.74        25
-#           11       0.80      0.49      0.61        49
+#            9       0.67      0.91      0.77        32
+#           10       0.67      0.88      0.76        25
+#           11       0.85      0.59      0.70        49
 #           12       0.80      0.44      0.57        27
 
 #     accuracy                           0.89      3162
-#    macro avg       0.85      0.82      0.82      3162
-# weighted avg       0.89      0.89      0.89      3162
-
+#    macro avg       0.86      0.83      0.83      3162
+# weighted avg       0.90      0.89      0.89      3162
 #%%
+
+# Find best k after removing highly correlated features
+
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import f1_score, classification_report
@@ -436,7 +470,6 @@ from sklearn.metrics import f1_score, classification_report
 # Set random seed for reproducibility
 random_seed = 31
 
-# Stratified k-fold to ensure each fold has a similar class distribution
 strat_kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=random_seed)
 
 # List to store cross-validation F1 scores for different k values
@@ -444,10 +477,13 @@ cv_f1_scores = []
 train_f1_scores = []
 test_f1_scores = []
 k_range = range(1, 20)
+X_train, X_test, y_train, y_test = train_test_split(combined_X_reduced, combined_y, test_size=0.3, random_state=42)
+
 
 # Loop through different k values
 for k in k_range:
     knn = KNeighborsClassifier(n_neighbors=k, metric='euclidean')
+    
     
     # Perform cross-validation and get the mean f1_weighted score
     f1_scores = cross_val_score(knn, X_train, y_train, cv=strat_kfold, scoring='f1_weighted')
@@ -491,69 +527,10 @@ plt.ylabel('F1 Score (weighted)')
 plt.legend()
 plt.title('F1 Scores for Train, Test, and Cross-Validation')
 plt.show()
-#%%
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import f1_score, classification_report, accuracy_score
 
-# Set random seed for reproducibility
-random_seed = 31
+# Best k found through cross-validation: 7
+# k=7 | Train F1 (weighted): 0.95 | Test F1 (weighted): 0.93
 
-# Stratified k-fold to ensure each fold has a similar class distribution
-strat_kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=random_seed)
-
-# List to store cross-validation F1 scores for different k values
-cv_f1_scores = []
-train_f1_scores = []
-test_f1_scores = []
-k_range = range(1, 20)
-
-# Loop through different k values
-for k in k_range:
-    knn = KNeighborsClassifier(n_neighbors=k, metric='euclidean')
-    
-    # Perform cross-validation and get the mean f1_weighted score
-    f1_scores = cross_val_score(knn, X_train, y_train, cv=strat_kfold, scoring='accuracy')
-    cv_f1_scores.append(f1_scores.mean())
-    
-    # Train the KNN model on the entire training set and evaluate on both train and test sets
-    knn.fit(X_train, y_train)
-    y_train_pred = knn.predict(X_train)
-    y_test_pred = knn.predict(X_test)
-    
-    # Store f1_weighted score for training and test sets
-    train_f1 = accuracy_score(y_train, y_train_pred)
-    test_f1 = accuracy_score(y_test, y_test_pred)
-    
-    train_f1_scores.append(train_f1)
-    test_f1_scores.append(test_f1)
-    
-    # Print k, train, and test F1 scores
-    print(f"k={k} | Train F1 (weighted): {train_f1:.2f} | Test F1 (weighted): {test_f1:.2f}")
-
-# Create a DataFrame to store k values and corresponding F1 scores for train, test, and cross-validation
-results_df_f1 = pd.DataFrame({
-    'k': list(k_range),
-    'Cross-Validated F1 (weighted)': cv_f1_scores,
-    'Train F1 (weighted)': train_f1_scores,
-    'Test F1 (weighted)': test_f1_scores
-})
-
-# Determine the best k based on cross-validation score
-best_k = k_range[cv_f1_scores.index(max(cv_f1_scores))]
-print(f"Best k found through cross-validation: {best_k}")
-
-# Plot train, test, and cross-validated F1 scores to visually inspect overfitting
-import matplotlib.pyplot as plt
-
-plt.plot(k_range, cv_f1_scores, label='Cross-Validated F1', marker='o')
-plt.plot(k_range, train_f1_scores, label='Train F1', marker='o')
-plt.plot(k_range, test_f1_scores, label='Test F1', marker='o')
-plt.xlabel('k (Number of Neighbors)')
-plt.ylabel('F1 Score (weighted)')
-plt.legend()
-plt.title('Accuracy for Train, Test, and Cross-Validation')
-plt.show()
 
 #%%
 

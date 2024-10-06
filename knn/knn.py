@@ -8,6 +8,7 @@ from sklearn import neighbors
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
+from sklearn.metrics import f1_score
 # %%
 # Reading in data
 train = pd.read_csv("../data/processed/train.csv")
@@ -19,7 +20,6 @@ y_train = train[['label']]
 X_test = test.iloc[:, :-2]
 y_test = test[['label']]
 
-# %%
 # Get the machine learning algorithm k-NN 
 
 knn = neighbors.KNeighborsClassifier(n_neighbors = 7, metric='euclidean')
@@ -29,6 +29,9 @@ print('kNN accuracy for training set: %f' % knn_model.score(X_train, y_train))
 print('kNN accuracy for test set: %f' % knn_model.score(X_test, y_test))
 # kNN accuracy for training set: 0.970388
 # kNN accuracy for test set: 0.892473
+
+print(f1_score(y_train, knn_model.predict(X_train) , average='weighted')) # 0.9700585744061878
+print(f1_score(y_test, knn_model.predict(X_test), average='weighted')) # 0.8905021655360718
 #%%
 # Choosing best k (based on 10-fold CV, accuracy)
 
