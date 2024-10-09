@@ -9,6 +9,7 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
 # %%
 # Reading in data
 train = pd.read_csv("../data/processed/train.csv")
@@ -19,6 +20,31 @@ y_train = train[['label']]
 
 X_test = test.iloc[:, :-2]
 y_test = test[['label']]
+#%%
+
+# LDA (check if data is linearly separable)
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+
+# Train LDA
+lda = LDA()
+lda.fit(X_train, y_train)
+
+# Check accuracy on training data
+y_train_pred = lda.predict(X_train)
+accuracy = accuracy_score(y_train, y_train_pred)
+
+print(f"Training accuracy with LDA: {accuracy:.2f}")
+# Training accuracy with LDA: 0.98 -> data is nearly linearly separable
+#%%
+svm_rbf = SVC(kernel='rbf')
+svm_rbf.fit(X_train, y_train)
+
+y_train_pred_rbf = svm_rbf.predict(X_train)
+accuracy_rbf = accuracy_score(y_train, y_train_pred_rbf)
+
+print(f"Training accuracy with RBF Kernel: {accuracy_rbf:.2f}")
+# Training accuracy with RBF Kernel: 0.97
+
 #%%
 # Concatenate the labels from train and test datasets
 combined = pd.concat([train, test])
