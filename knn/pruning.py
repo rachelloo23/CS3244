@@ -8,7 +8,6 @@ from sklearn import neighbors
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 # %%
 # Reading in data
@@ -183,45 +182,36 @@ print(temp_1)
 
 # Drop Related features (corr > 0.8)
 
-import pandas as pd
+# Calculate the correlation matrix for the training set
+correlation_matrix = X_train.corr().abs()
 
-# Load your dataset
-combined_X = combined.iloc[:, :-2] # remove id and label col
-combined_y = combined[['label']]
-# Calculate the correlation matrix
-correlation_matrix = combined_X.corr().abs()  # Absolute values to consider both positive and negative correlations
+# Create a mask for the upper triangle of the correlation matrix
+upper_tri = correlation_matrix.where(np.triu(np.ones(correlation_matrix.shape), k=1).astype(bool))
 
-# Define a threshold for high correlation
-threshold = 0.8
+# Find the index of feature columns that have a correlation greater than 0.8
+to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > 0.8)]
 
-# Find features that are correlated above the threshold
-to_drop = set()
-for i in range(len(correlation_matrix.columns)):
-    for j in range(i):
-        # Check for high correlation
-        if correlation_matrix.iloc[i, j] > threshold:
-            colname = correlation_matrix.columns[i]
-            to_drop.add(colname)
-
-# Remove the correlated features from the original DataFrame
-combined_X_reduced = combined_X.drop(columns=to_drop)
+# Drop the features from both the training and testing set
+X_train_selected = X_train.drop(columns=to_drop)
+X_test_selected = X_test.drop(columns=to_drop)
 
 # Display the results
 print("Dropped features:", to_drop)
-print("Original Dataframe shape: ", combined_X.shape)
-print("Reduced DataFrame shape:", combined_X_reduced.shape)
+print("Original Dataframe shape: ", X_train.shape)
+print("Reduced DataFrame shape:", X_train_selected.shape)
 
-# Original Dataframe shape:  (10929, 561)
-# Reduced DataFrame shape: (10929, 148)
+# Original Dataframe shape:  (7767, 561)
+# Reduced DataFrame shape: (7767, 145)
 #%%
 # Use reduced features to test knn
-X_train, X_test, y_train, y_test = train_test_split(combined_X_reduced, combined_y, test_size=0.3, random_state=42)
 
-knn = neighbors.KNeighborsClassifier(n_neighbors = 7, metric='euclidean')
-knn_model = knn.fit(X_train, y_train) 
+knn = neighbors.KNeighborsClassifier(n_neighbors = 10, metric='euclidean')
+knn_model = knn.fit(X_train_selected, y_train) 
 
-print(f1_score(y_train, knn_model.predict(X_train) , average='weighted')) # 0.9506891426737768
-print(f1_score(y_test, knn_model.predict(X_test), average='weighted')) # 0.9269573991573669
+print(f1_score(y_train, knn_model.predict(X_train_selected) , average='weighted')) # 0.9506891426737768
+print(f1_score(y_test, knn_model.predict(X_test_selected), average='weighted')) # 0.9269573991573669
+print(classification_report(y_test, knn_model.predict(X_test_selected)))
+
 #%%
 
 # do cv on this reduced dataset
@@ -374,11 +364,11 @@ threshold = 0.04
 selector = VarianceThreshold(threshold=threshold)
 
 # Apply the selector to your dataset (it returns only the features that meet the threshold)
-X_high_variance = selector.fit_transform(ori_X_train)
+X_high_variance = selector.fit_transform(X_train)
 
 
 # To get the column names of the selected features, use the selector's support attribute
-selected_columns = ori_X_train.columns[selector.get_support()]
+selected_columns = X_train.columns[selector.get_support()]
 
 
 # Create a new DataFrame with only the high variance features
@@ -390,21 +380,35 @@ print(reduced_X.shape)
 # (7767, 386)
 
 reduced_X_train = reduced_X
-reduced_y_train = ori_y_train
 
-reduced_X_test = pd.DataFrame(ori_X_test, columns=selected_columns)
-reduced_y_test = ori_y_test
+reduced_X_test = pd.DataFrame(X_test, columns=selected_columns)
 
 knn = neighbors.KNeighborsClassifier(n_neighbors = 7, metric='euclidean')
-knn_model = knn.fit(reduced_X_train, reduced_y_train) 
+knn_model = knn.fit(reduced_X_train, y_train) 
 
-print('kNN accuracy for training set: %f' % knn_model.score(reduced_X_train, reduced_y_train))
-print('kNN accuracy for test set: %f' % knn_model.score(reduced_X_test, reduced_y_test))
-# kNN accuracy for training set: 0.970774
-# kNN accuracy for test set: 0.890259
 
-print(f1_score(reduced_y_train, knn_model.predict(reduced_X_train) , average='weighted')) # 0.9704876645013684
-print(f1_score(reduced_y_test, knn_model.predict(reduced_X_test), average='weighted')) # 0.8885734965767056
+print(f1_score(y_train, knn_model.predict(reduced_X_train) , average='weighted')) # 0.9704876645013684
+print(f1_score(y_test, knn_model.predict(reduced_X_test), average='weighted')) # 0.8885734965767056
+print(classification_report(y_test, knn_model.predict(reduced_X_test)))
+#               precision    recall  f1-score   support
+
+#            1       0.85      0.98      0.91       496
+#            2       0.88      0.90      0.89       471
+#            3       0.94      0.78      0.85       420
+#            4       0.91      0.79      0.84       508
+#            5       0.83      0.93      0.88       556
+#            6       1.00      0.99      1.00       545
+#            7       0.95      0.78      0.86        23
+#            8       1.00      1.00      1.00        10
+#            9       0.64      0.91      0.75        32
+#           10       0.66      0.84      0.74        25
+#           11       0.84      0.55      0.67        49
+#           12       0.75      0.44      0.56        27
+
+#     accuracy                           0.89      3162
+#    macro avg       0.85      0.82      0.83      3162
+# weighted avg       0.90      0.89      0.89      3162
+
 
 
 #%%
@@ -487,84 +491,11 @@ print(classification_report(y_test_bag, y_pred_bag))
 # weighted avg       0.90      0.89      0.89      3162
 #%%
 
-# Find best k after removing highly correlated features
-
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import f1_score, classification_report
-
-# Set random seed for reproducibility
-random_seed = 31
-
-strat_kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=random_seed)
-
-# List to store cross-validation F1 scores for different k values
-cv_f1_scores = []
-train_f1_scores = []
-test_f1_scores = []
-k_range = range(1, 20)
-X_train, X_test, y_train, y_test = train_test_split(combined_X_reduced, combined_y, test_size=0.3, random_state=42)
-
-
-# Loop through different k values
-for k in k_range:
-    knn = KNeighborsClassifier(n_neighbors=k, metric='euclidean')
-    
-    
-    # Perform cross-validation and get the mean f1_weighted score
-    f1_scores = cross_val_score(knn, X_train, y_train, cv=strat_kfold, scoring='f1_weighted')
-    cv_f1_scores.append(f1_scores.mean())
-    
-    # Train the KNN model on the entire training set and evaluate on both train and test sets
-    knn.fit(X_train, y_train)
-    y_train_pred = knn.predict(X_train)
-    y_test_pred = knn.predict(X_test)
-    
-    # Store f1_weighted score for training and test sets
-    train_f1 = f1_score(y_train, y_train_pred, average='weighted')
-    test_f1 = f1_score(y_test, y_test_pred, average='weighted')
-    
-    train_f1_scores.append(train_f1)
-    test_f1_scores.append(test_f1)
-    
-    # Print k, train, and test F1 scores
-    print(f"k={k} | Train F1 (weighted): {train_f1:.2f} | Test F1 (weighted): {test_f1:.2f}")
-
-# Create a DataFrame to store k values and corresponding F1 scores for train, test, and cross-validation
-results_df_f1 = pd.DataFrame({
-    'k': list(k_range),
-    'Cross-Validated F1 (weighted)': cv_f1_scores,
-    'Train F1 (weighted)': train_f1_scores,
-    'Test F1 (weighted)': test_f1_scores
-})
-
-# Determine the best k based on cross-validation score
-best_k = k_range[cv_f1_scores.index(max(cv_f1_scores))]
-print(f"Best k found through cross-validation: {best_k}")
-
-# Plot train, test, and cross-validated F1 scores to visually inspect overfitting
-import matplotlib.pyplot as plt
-
-plt.plot(k_range, cv_f1_scores, label='Cross-Validated F1', marker='o')
-plt.plot(k_range, train_f1_scores, label='Train F1', marker='o')
-plt.plot(k_range, test_f1_scores, label='Test F1', marker='o')
-plt.xlabel('k (Number of Neighbors)')
-plt.ylabel('F1 Score (weighted)')
-plt.legend()
-plt.title('F1 Scores for Train, Test, and Cross-Validation')
-plt.show()
-
-# Best k found through cross-validation: 7
-# k=7 | Train F1 (weighted): 0.95 | Test F1 (weighted): 0.93
-
-
-#%%
-
-# PCA
+# PCA doesn't help much
 
 from sklearn.decomposition import PCA
 
-pca = PCA(n_components=160)
+pca = PCA(n_components=0.9) # keep features that explains 0.9 of the variance in the data
 
 pca.fit(X_train)
 
@@ -579,7 +510,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, f1_score
 
 # Step 1: Fit PCA to the training data
-pca = PCA(n_components=160)
+pca = PCA(n_components=0.9)
 pca.fit(X_train)
 
 # Step 2: Transform both training and test data using PCA
@@ -608,13 +539,36 @@ test_f1_weighted = f1_score(y_test, y_test_pred, average='weighted')
 print(f"Training f1_weighted: {train_f1_weighted:.2f}")
 print(f"Test f1_weighted: {test_f1_weighted:.2f}")
 
-# k: 10
-# Training f1_weighted: 0.96
-# Test f1_weighted: 0.88
+# Training Set Classification Report:
+#               precision    recall  f1-score   support
 
-# k: 7
-# Training f1_weighted: 0.97
-# Test f1_weighted: 0.89
+#            1       0.99      1.00      0.99      1226
+#            2       0.98      1.00      0.99      1073
+#            3       1.00      0.99      0.99       987
+#            4       0.93      0.89      0.91      1293
+#            5       0.91      0.94      0.92      1423
+#            6       0.99      1.00      1.00      1413
+#            7       0.77      0.87      0.82        47
+#            8       0.94      0.65      0.77        23
+#            9       0.79      0.85      0.82        75
+#           10       0.82      0.85      0.84        60
+#           11       0.90      0.79      0.84        90
+#           12       0.84      0.74      0.79        57
+
+#     accuracy                           0.96      7767
+#    macro avg       0.91      0.88      0.89      7767
+# weighted avg       0.96      0.96      0.96      7767
+
+# Test Set Classification Report:
+#               precision    recall  f1-score   support
+
+#            1       0.83      0.96      0.89       496
+#            2       0.85      0.86      0.86       471
+# ...
+# weighted avg       0.87      0.86      0.86      3162
+
+# Training f1_weighted: 0.96
+# Test f1_weighted: 0.86
 
 #%%
 
@@ -629,4 +583,99 @@ knn.fit(X_train, y_train)
 
 confusion_matrix(y_true=y_test, y_pred=knn.predict(X_test))
 #%% 
-# ROC
+# RFE
+
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.pipeline import Pipeline
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+import matplotlib.pyplot as plt
+
+# Select top k features based on ANOVA F-test
+kbest = SelectKBest(score_func=f_classif)
+
+# Create a pipeline to chain feature selection and classification
+pipe = Pipeline([('feature_selection', kbest), ('knn', knn)])
+
+# Define the range of features to test
+k_range = range(50, 500)
+
+# Perform cross-validation to evaluate performance for different k values
+cv = StratifiedKFold(10)
+mean_scores = []
+std_scores = []
+
+for k in k_range:
+    pipe.set_params(feature_selection__k=k)
+    scores = cross_val_score(pipe, X_train, y_train, cv=cv, scoring='f1_weighted')
+    mean_scores.append(scores.mean())
+    std_scores.append(scores.std())
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+plt.plot(k_range, mean_scores, marker='o')
+plt.fill_between(k_range, 
+                 [m - s for m, s in zip(mean_scores, std_scores)], 
+                 [m + s for m, s in zip(mean_scores, std_scores)], alpha=0.2)
+plt.xlabel('Number of Features Selected')
+plt.ylabel('Cross-Validation F1 Weighted Score')
+plt.title('SelectKBest with KNN')
+plt.show()
+
+# Find the best number of features
+best_k = k_range[mean_scores.index(max(mean_scores))]
+print(f'Optimal number of features: {best_k}')
+
+# Optimal number of features: 197
+#%% 
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import RFE
+
+# Initialize Logistic Regression as the estimator for RFE (to rank features)
+lr = LogisticRegression(max_iter=1000)
+
+# Initialize RFE with Logistic Regression as estimator
+rfe = RFE(estimator=lr, n_features_to_select=197, step=1)
+
+# Fit RFE on the training data
+rfe.fit(X_train, y_train)
+
+# Transform the dataset based on selected features
+X_train_rfe = rfe.transform(X_train)
+X_test_rfe = rfe.transform(X_test)
+
+# Initialize and fit KNN model using the selected features
+knn = KNeighborsClassifier(n_neighbors=7, metric='euclidean')
+knn.fit(X_train_rfe, y_train)
+
+# Predict using the test set
+y_train_pred = knn.predict(X_train_rfe)
+y_test_pred = knn.predict(X_test_rfe)
+
+# Evaluate the model using F1 score (weighted)
+train_f1_weighted = f1_score(y_train, y_train_pred, average='weighted')
+test_f1_weighted = f1_score(y_test, y_test_pred, average='weighted')
+
+# Print the results
+print(f"Training F1 (weighted): {train_f1_weighted:.2f}")
+print(f"Test F1 (weighted): {test_f1_weighted:.2f}")
+# Training F1 (weighted): 0.97
+# Test F1 (weighted): 0.90
+#              precision    recall  f1-score   support
+
+#            1       0.88      0.99      0.93       496
+#            2       0.90      0.90      0.90       471
+#            3       0.94      0.85      0.90       420
+#            4       0.90      0.81      0.85       508
+#            5       0.84      0.92      0.88       556
+#            6       1.00      0.99      1.00       545
+#            7       0.95      0.78      0.86        23
+#            8       1.00      1.00      1.00        10
+#            9       0.68      0.94      0.79        32
+#           10       0.64      0.84      0.72        25
+#           11       0.89      0.51      0.65        49
+#           12       0.81      0.48      0.60        27
+
+#     accuracy                           0.90      3162
+#    macro avg       0.87      0.83      0.84      3162
+# weighted avg       0.90      0.90      0.90      3162
