@@ -65,7 +65,26 @@ knn_model = knn.fit(X_train_ros, y_train_ros)
 print(f1_score(y_train_ros, knn_model.predict(X_train_ros) , average='weighted')) # 0.9896637821765382
 print(f1_score(y_test, knn_model.predict(X_test), average='weighted')) # 0.8921237480429026
 
-print(classification_report(y_test, knn_model.predict(X_train)))
+print(classification_report(y_test, knn_model.predict(X_test)))
+#               precision    recall  f1-score   support
+
+#            1       0.86      0.98      0.92       496
+#            2       0.88      0.91      0.90       471
+#            3       0.96      0.79      0.86       420
+#            4       0.90      0.81      0.85       508
+#            5       0.85      0.92      0.88       556
+#            6       1.00      0.99      0.99       545
+#            7       0.86      0.78      0.82        23
+#            8       0.67      1.00      0.80        10
+#            9       0.63      0.84      0.72        32
+#           10       0.62      0.80      0.70        25
+#           11       0.76      0.65      0.70        49
+#           12       0.75      0.44      0.56        27
+
+#     accuracy                           0.89      3162
+#    macro avg       0.81      0.83      0.81      3162
+# weighted avg       0.90      0.89      0.89      3162
+
 #%%
 
 # Use SMOTE (can use cause all data is numerical)
@@ -83,37 +102,24 @@ knn_model = knn.fit(X_train_smote, y_train_smote)
 
 print(f1_score(y_train_smote, knn_model.predict(X_train_smote) , average='weighted')) # 0.9891925159538429
 print(f1_score(y_test, knn_model.predict(X_test), average='weighted')) # 0.8948994998711476
+print(classification_report(y_test, knn_model.predict(X_test)))
+#               precision    recall  f1-score   support
 
-#%%
+#            1       0.90      0.97      0.93       496
+#            2       0.88      0.90      0.89       471
+#            3       0.92      0.82      0.87       420
+#            4       0.87      0.86      0.87       508
+#            5       0.88      0.88      0.88       556
+#            6       1.00      0.98      0.99       545
+#            7       0.56      0.83      0.67        23
+#            8       0.71      1.00      0.83        10
+#            9       0.62      0.88      0.73        32
+#           10       0.61      0.76      0.68        25
+#           11       0.76      0.63      0.69        49
+#           12       0.67      0.44      0.53        27
 
-# Step 1: Import necessary libraries
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from sklearn.svm import SVC
-from sklearn.metrics import classification_report, accuracy_score, f1_score
-from sklearn.model_selection import train_test_split
+#     accuracy                           0.90      3162
+#    macro avg       0.78      0.83      0.80      3162
+# weighted avg       0.90      0.90      0.89      3162
 
-# Step 3: Apply LDA
-lda = LDA(n_components=None)  # Leave n_components=None to maximize class separability
-X_train_lda = lda.fit_transform(X_train, y_train)
-X_test_lda = lda.transform(X_test)
 
-# Step 4: Train a Linear SVM model on LDA-transformed data
-linear_svm = SVC(kernel='linear', random_state=42)
-linear_svm.fit(X_train_lda, y_train)
-
-# Step 5: Predict on the test set
-y_pred_train = linear_svm.predict(X_train_lda)
-y_pred_test = linear_svm.predict(X_test_lda)
-
-# Step 6: Evaluate the model
-print("Training Evaluation:")
-print(f"Training Accuracy: {accuracy_score(y_train, y_pred_train)}")
-print(f"Training F1 Score (weighted): {f1_score(y_train, y_pred_train, average='weighted')}")
-
-print("\nTest Evaluation:")
-print(f"Test Accuracy: {accuracy_score(y_test, y_pred_test)}")
-print(f"Test F1 Score (weighted): {f1_score(y_test, y_pred_test, average='weighted')}")
-
-# Detailed classification report
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred_test))
