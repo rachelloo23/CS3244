@@ -41,7 +41,8 @@ def create_df(X_train, subject_id, y_train, features):
     return train
 train = create_df(X_train, subject_id, y_train, features)
 test = create_df(X_test, subject_id, y_test, features)
-
+train.columns = train.columns.str.strip()
+train.columns = train.columns.str.strip()
 # %%
 train.to_csv("../data/processed/train.csv", index=False)
 test.to_csv("../data/processed/test.csv", index=False)
