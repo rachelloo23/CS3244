@@ -39,7 +39,7 @@ random_search = RandomizedSearchCV(
     param_distributions=param_dist,
     n_iter=100,  # Number of different combinations to try
     scoring='accuracy',  # You can use other metrics like 'f1', 'roc_auc', etc.
-    cv=10,  # 5-fold cross-validation
+    cv=10,  # 10-fold cross-validation
     random_state=42,
     n_jobs=-1  # Use all available cores for parallel processing
 )
