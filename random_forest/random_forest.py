@@ -12,6 +12,9 @@ from ray import tune
 from ray.train import RunConfig
 from ray.tune.schedulers import ASHAScheduler
 from ray.air import session
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
+
 
 # %%
 # Set random seed
@@ -20,7 +23,6 @@ np.random.seed(random_seed)
 random.seed(random_seed)
 os.environ['PYTHONHASHSEED'] = str(random_seed)
 
-# %%
 # Load the train and test datasets
 train = pd.read_csv("../data/processed/train.csv")
 test = pd.read_csv("../data/processed/test.csv")
@@ -32,21 +34,19 @@ test = test.drop(["id"], axis=1)
 # Split the data into X (features) and y (labels)
 X_train = train.drop(["label"], axis=1)
 y_train = train["label"] - 1  # Adjusting label for zero-indexing
-y_test = test["label"] - 1
 X_test = test.drop(["label"], axis=1)
+y_test = test["label"] - 1
 
-# %%
 # Define the search space for Random Forest hyperparameters
 param_dist_rf = {
-    "n_estimators": tune.randint(50, 300),              # Number of trees
-    "max_depth": tune.randint(3, 30),                   # Maximum depth of the tree
-    "max_features": tune.choice(["sqrt", "log2", None]), # Max number of features considered for splitting
-    "min_samples_split": tune.randint(2, 10),           # Minimum samples required to split an internal node
-    "min_samples_leaf": tune.randint(1, 4),             # Minimum samples required to be at a leaf node
-    "bootstrap": tune.choice([True, False])             # Whether bootstrap samples are used when building trees
+    "n_estimators": tune.randint(50, 300),
+    "max_depth": tune.randint(3, 30),
+    "max_features": tune.choice(["sqrt", "log2", None]),
+    "min_samples_split": tune.randint(2, 10),
+    "min_samples_leaf": tune.randint(1, 4),
+    "bootstrap": tune.choice([True, False])
 }
 
-# %%
 # Define the objective function for Random Forest tuning
 def objective_rf(config):
     model = RandomForestClassifier(
@@ -56,13 +56,35 @@ def objective_rf(config):
         min_samples_split=config["min_samples_split"],
         min_samples_leaf=config["min_samples_leaf"],
         bootstrap=config["bootstrap"],
-        random_state=random_seed
+        random_state=42  # Use a fixed seed for reproducibility
     )
-    scores = cross_val_score(model, X_train, y_train, cv=10, scoring=make_scorer(f1_score, average='micro'))
-    session.report({'f1': scores.mean()})
+    
+    # Define stratified K-fold with standardization within each fold
+    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    scores = []
+    
+    for train_index, val_index in skf.split(X_train, y_train):
+        # Split into training and validation sets
+        X_train_fold, X_val_fold = X_train.iloc[train_index], X_train.iloc[val_index]
+        y_train_fold, y_val_fold = y_train.iloc[train_index], y_train.iloc[val_index]
+        
+        # Standardize each fold independently
+        scaler = StandardScaler()
+        X_train_fold = scaler.fit_transform(X_train_fold)
+        X_val_fold = scaler.transform(X_val_fold)
+        
+        # Train the model on the current fold
+        model.fit(X_train_fold, y_train_fold)
+        
+        # Evaluate the model on the validation fold
+        val_pred = model.predict(X_val_fold)
+        f1 = f1_score(y_val_fold, val_pred, average='micro')
+        scores.append(f1)
+    
+    # Report the average F1 score across all folds
+    session.report({'f1': sum(scores) / len(scores)})
 
-# %%
-# Run the hyperparameter tuning for Random Forest
+# Initialize Ray and run the hyperparameter tuning
 ray.shutdown()  # Shutdown Ray if it was already running
 ray.init()  # Initialize Ray
 
@@ -72,7 +94,7 @@ analysis_rf = tune.Tuner(
         metric="f1",
         mode="max",
         scheduler=ASHAScheduler(),
-        num_samples=50,  # Try 50 different configurations
+        num_samples=50
     ),
     param_space=param_dist_rf,
     run_config=RunConfig(storage_path=os.path.abspath("log_rf"), name="rf_trial_1", log_to_file=True)
@@ -80,17 +102,18 @@ analysis_rf = tune.Tuner(
 
 rf_results = analysis_rf.fit()
 
-# %%
 # Get the best hyperparameters from the tuning process
 rf_df = rf_results.get_dataframe()
 best_result_rf = rf_results.get_best_result("f1", mode="max")
 best_config_rf = best_result_rf.config
 
-# Print the best hyperparameters
 print("Best hyperparameters for RandomForestClassifier: ", best_config_rf)
 
-# %%
 # Train the final Random Forest model with the best hyperparameters
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
 rf_tuned = RandomForestClassifier(
     n_estimators=best_config_rf['n_estimators'],
     max_depth=best_config_rf['max_depth'],
@@ -98,35 +121,32 @@ rf_tuned = RandomForestClassifier(
     min_samples_split=best_config_rf['min_samples_split'],
     min_samples_leaf=best_config_rf['min_samples_leaf'],
     bootstrap=best_config_rf['bootstrap'],
-    random_state=random_seed
+    random_state=42
 )
-rf_tuned.fit(X_train, y_train)
+rf_tuned.fit(X_train_scaled, y_train)
 
-# %%
 # Evaluate the model on training and test data
-print('Random Forest - Training set score: {:.4f}'.format(rf_tuned.score(X_train, y_train)))
-print('Random Forest - Test set score: {:.4f}'.format(rf_tuned.score(X_test, y_test)))
+print('Random Forest - Training set score: {:.4f}'.format(rf_tuned.score(X_train_scaled, y_train)))
+print('Random Forest - Test set score: {:.4f}'.format(rf_tuned.score(X_test_scaled, y_test)))
 
-# %%
 # Predict on the test set
-y_test_pred_rf = rf_tuned.predict(X_test)
+y_test_pred_rf = rf_tuned.predict(X_test_scaled)
 
 # Compute the confusion matrix
 cm_rf = confusion_matrix(y_test, y_test_pred_rf)
-
 print('Random Forest Confusion matrix\n\n', cm_rf)
 
 # Print additional classification metrics
 print('\nRandom Forest Classification Report\n')
 print(classification_report(y_test, y_test_pred_rf))
 
-# %%
 # Save the tuning results
 rf_df.to_csv("rf_results.csv", index=False)
 
 # Shutdown Ray after completion
 ray.shutdown()
 
+###### Without feature selection #########
 # Best hyperparameters for RandomForestClassifier:  {'n_estimators': 171, 'max_depth': 19, 'max_features': 'log2', 'min_samples_split': 7, 'min_samples_leaf': 1, 'bootstrap': False}
 # Random Forest - Training set score: 1.0000
 # Random Forest - Test set score: 0.9222
@@ -165,3 +185,9 @@ ray.shutdown()
 #     accuracy                           0.92      3162
 #    macro avg       0.83      0.82      0.82      3162
 # weighted avg       0.92      0.92      0.92      3162
+
+
+
+###### After feature selection #########
+
+
