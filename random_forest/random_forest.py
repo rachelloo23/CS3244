@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 
 # %%
 # Set random seed
-random_seed = 31
+random_seed = 42
 np.random.seed(random_seed)
 random.seed(random_seed)
 os.environ['PYTHONHASHSEED'] = str(random_seed)
