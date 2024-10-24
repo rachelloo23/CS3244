@@ -1,0 +1,2 @@
+f1,timestamp,checkpoint_dir_name,done,training_iteration,trial_id,date,time_this_iter_s,time_total_s,pid,hostname,node_ip,time_since_restore,iterations_since_restore
+0.9151526157969458,1729694202,,True,1,cab10_00038,2024-10-23_22-36-42,3662.704179286957,3662.704179286957,13349,Collins-MacBook-Pro.local,127.0.0.1,3662.704179286957,1

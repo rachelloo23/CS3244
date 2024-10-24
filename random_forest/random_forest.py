@@ -94,7 +94,7 @@ analysis_rf = tune.Tuner(
         metric="f1",
         mode="max",
         scheduler=ASHAScheduler(),
-        num_samples=50
+        num_samples=20
     ),
     param_space=param_dist_rf,
     run_config=RunConfig(storage_path=os.path.abspath("log_rf"), name="rf_trial_1", log_to_file=True)
@@ -189,5 +189,42 @@ ray.shutdown()
 
 
 ###### After feature selection #########
+# Best hyperparameters for RandomForestClassifier:  {'n_estimators': 152, 'max_depth': 22, 'max_features': 'sqrt', 'min_samples_split': 8, 'min_samples_leaf': 3, 'bootstrap': False}
+# Random Forest - Training set score: 0.9999
+# Random Forest - Test set score: 0.9152
+# Random Forest Confusion matrix
 
+#  [[480   8   8   0   0   0   0   0   0   0   0   0]
+#  [ 34 429   8   0   0   0   0   0   0   0   0   0]
+#  [ 17  48 355   0   0   0   0   0   0   0   0   0]
+#  [  0   0   0 454  53   0   1   0   0   0   0   0]
+#  [  0   0   0  38 518   0   0   0   0   0   0   0]
+#  [  0   1   0   0   0 544   0   0   0   0   0   0]
+#  [  0   1   0   2   0   0  18   1   1   0   0   0]
+#  [  0   0   0   0   0   0   1   9   0   0   0   0]
+#  [  0   0   0   0   0   0   0   0  26   0   6   0]
+#  [  0   0   0   0   0   0   0   0   0  17   1   7]
+#  [  3   1   0   1   0   0   3   0  13   0  28   0]
+#  [  0   0   0   0   0   0   0   0   0   8   3  16]]
+
+# Random Forest Classification Report
+
+#               precision    recall  f1-score   support
+
+#            0       0.90      0.97      0.93       496
+#            1       0.88      0.91      0.89       471
+#            2       0.96      0.85      0.90       420
+#            3       0.92      0.89      0.91       508
+#            4       0.91      0.93      0.92       556
+#            5       1.00      1.00      1.00       545
+#            6       0.78      0.78      0.78        23
+#            7       0.90      0.90      0.90        10
+#            8       0.65      0.81      0.72        32
+#            9       0.68      0.68      0.68        25
+#           10       0.74      0.57      0.64        49
+#           11       0.70      0.59      0.64        27
+
+#     accuracy                           0.92      3162
+#    macro avg       0.83      0.82      0.83      3162
+# weighted avg       0.92      0.92      0.91      3162
 
