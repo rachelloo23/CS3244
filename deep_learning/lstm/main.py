@@ -69,10 +69,14 @@ def main() -> None:
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     # Train the model on the padded dataset
-    model.fit(padded_data, epochs=1) # change epochs
+    number_of_batches = len(filtered_data) # this depends on the number of training samples
+    EPOCHS = 2 # user define epochs
+    STEPS_PER_EPOCH = number_of_batches // EPOCHS # this is fixed, don't change
+    model.fit(padded_data, epochs=EPOCHS, steps_per_epoch=STEPS_PER_EPOCH)
 
     # Evaluate the model
-    model.evaluate(padded_data)
+    number_of_eval_sample = len(filtered_data) # this should be changed to the number of evaluation samples
+    model.evaluate(padded_data, steps=number_of_eval_sample)
 
 if __name__ == '__main__':
     main()
