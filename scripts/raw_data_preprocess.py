@@ -3,30 +3,40 @@ import os
 import numpy as np
 import tensorflow as tf
 
-class DataCatalog:
+class DataCatalogProcessor:
     def __init__(self, data_path: str, raw_data_path: str):
-        """Initialize the DataCatalog with paths to the data."""
+        """
+        Initializes the DataCatalog with paths to the data.
+        
+        Parameters:
+        - data_path: Path to the main dataset (e.g., activity labels).
+        - raw_data_path: Path to the raw accelerometer and gyroscope data.
+        """
         self.data_path = data_path
         self.raw_data_path = raw_data_path
 
-    def _load_data(self, fname: str, names: list) -> pd.DataFrame:
-        """Load a dataset from a file with specified column names."""
-        if not os.path.exists(fname):
-            raise FileNotFoundError(f"File not found: {fname}")
-        return pd.read_csv(fname, sep='\s+', header=None, names=names)
-
     def load_labels(self) -> pd.DataFrame:
-        """Load the labels dataset with experiment, user, activity, and start/end indices."""
+        """
+        Loads the labels dataset with experiment, user, activity, and start/end indices.
+        
+        Returns:
+        - pd.DataFrame: The labels dataset.
+        """
+        labels_file = os.path.join(self.raw_data_path, 'labels.txt')
         names = ['exp_id', 'user_id', 'activity_id', 'start_index', 'end_index']
-        path = os.path.join(self.raw_data_path, 'labels.txt')
-        return self._load_data(path, names)
+        return pd.read_csv(labels_file, sep='\s+', header=None, names=names)
 
     def load_activity_labels(self) -> pd.DataFrame:
-        """Load the activity labels dataset mapping activity IDs to activity names."""
+        """
+        Loads the activity labels dataset mapping activity IDs to activity names.
+        
+        Returns:
+        - pd.DataFrame: The activity labels dataset.
+        """
+        activity_labels_file = os.path.join(self.data_path, 'activity_labels.txt')
         names = ['activity_id', 'activity_name']
-        path = os.path.join(self.data_path, 'activity_labels.txt')
-        return self._load_data(path, names)
-
+        return pd.read_csv(activity_labels_file, sep='\s+', header=None, names=names)
+    
     def merge_labels_with_activity(self, labels: pd.DataFrame, activity_labels: pd.DataFrame) -> pd.DataFrame:
         """Merge labels with activity names for better analysis."""
         return labels.merge(activity_labels, on='activity_id', how='left')
@@ -44,83 +54,153 @@ class DataCatalog:
         """Display descriptive statistics of activity durations."""
         print(labels.groupby('activity_name')['window_size'].describe().sort_values(by='mean', ascending=True))
 
-    def _load_raw_data(self, exp_id: int, user_id: int) -> (pd.DataFrame, pd.DataFrame):
+class DataSet:
+    def __init__(self, data_catalog: pd.DataFrame, raw_data_path: str):
         """
-        Load accelerometer and gyroscope data for a specific experiment.
+        Initializes the DataSet with the catalog of data and raw data path.
+        
+        Parameters:
+        - data_catalog: DataFrame containing all experiment metadata.
+        - raw_data_path: Path to the raw sensor data (accelerometer and gyroscope).
+        """
+        self.data_catalog = data_catalog
+        self.raw_data_path = raw_data_path
+
+    def _load_file(self, file_path: str) -> pd.DataFrame:
+        """
+        Load data from a file into a Pandas DataFrame.
+        
+        Parameters:
+        - file_path: Path to the file.
+        
+        Returns:
+        - pd.DataFrame: Loaded data.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        return pd.read_csv(file_path, sep='\s+', header=None)
+
+    def _load_sensor_data(self, exp_id: int, user_id: int) -> (pd.DataFrame, pd.DataFrame):
+        """
+        Load accelerometer and gyroscope data for a given experiment and user.
         
         Parameters:
         - exp_id: The experiment ID.
         - user_id: The user ID.
         
         Returns:
-        - acc_data: The accelerometer data as a DataFrame.
-        - gyro_data: The gyroscope data as a DataFrame.
+        - (pd.DataFrame, pd.DataFrame): Tuple containing accelerometer and gyroscope data.
         """
         acc_file = os.path.join(self.raw_data_path, f"acc_exp{exp_id:02d}_user{user_id:02d}.txt")
         gyro_file = os.path.join(self.raw_data_path, f"gyro_exp{exp_id:02d}_user{user_id:02d}.txt")
         
-        acc_data = pd.read_csv(acc_file, sep='\s+', header=None)
-        gyro_data = pd.read_csv(gyro_file, sep='\s+', header=None)
-        
+        acc_data = self._load_file(acc_file)
+        gyro_data = self._load_file(gyro_file)
         return acc_data, gyro_data
 
     def _extract_window(self, acc_data: pd.DataFrame, gyro_data: pd.DataFrame, start_idx: int, end_idx: int) -> np.array:
         """
-        Extract the window of accelerometer and gyroscope data for a given start and end index.
+        Extract a time window from the accelerometer and gyroscope data.
         
         Parameters:
-        - acc_data: The accelerometer data.
-        - gyro_data: The gyroscope data.
-        - start_idx: The starting index of the window.
-        - end_idx: The ending index of the window.
+        - acc_data: Accelerometer data as a DataFrame.
+        - gyro_data: Gyroscope data as a DataFrame.
+        - start_idx: Start index of the window.
+        - end_idx: End index of the window.
         
         Returns:
-        - window: A concatenated array of accelerometer and gyroscope data for the window.
+        - np.array: Concatenated accelerometer and gyroscope data for the window.
         """
         acc_window = acc_data.iloc[start_idx:end_idx].values
         gyro_window = gyro_data.iloc[start_idx:end_idx].values
-        
-        # Concatenate accelerometer and gyroscope data along the features axis
-        window = np.concatenate((acc_window, gyro_window), axis=1)
-        
-        return window
+        return np.concatenate((acc_window, gyro_window), axis=1)
 
-    def load_experiment_data(self, data_catalog: pd.DataFrame): 
+    def __getitem__(self, index: int) -> (np.array, int):
         """
-        Create a TensorFlow dataset from the provided data catalog.
+        Retrieve a sample (data window and label) for a given index.
         
         Parameters:
-        - data_catalog: DataFrame containing all experiments and their metadata.
+        - index: The index of the sample in the data catalog.
         
         Returns:
-        - tf.data.Dataset: A TensorFlow Dataset ready for training.
+        - np.array: A data window.
+        - int: The activity label corresponding to the window.
         """
-        dataset = tf.data.Dataset.from_generator(
-            lambda: self._generator(data_catalog), 
-            output_signature=(
-                tf.TensorSpec(shape=(None, 6), dtype=tf.float32),  # Time-series data (6 features)
-                tf.TensorSpec(shape=(), dtype=tf.int32)            # Activity labels (single label per window)
-            )
+        row = self.data_catalog.iloc[index]
+        exp_id = row['exp_id']
+        user_id = row['user_id']
+        activity_id = row['activity_id'] - 1  # Zero-based label
+        start_idx = row['start_index']
+        end_idx = row['end_index']
+        
+        # Load sensor data (accelerometer and gyroscope)
+        acc_data, gyro_data = self._load_sensor_data(exp_id, user_id)
+        
+        # Extract the relevant window
+        window = self._extract_window(acc_data, gyro_data, start_idx, end_idx)
+        
+        return window.astype(np.float32), activity_id
+
+    def __len__(self):
+        """
+        Return the total number of samples in the dataset.
+        
+        Returns:
+        - int: Number of samples in the dataset.
+        """
+        return len(self.data_catalog)
+
+class DataLoader:
+    def __init__(self, data_catalog: pd.DataFrame, raw_data_path: str):
+        """
+        DataLoader to handle loading data in KerasTensor format without batching or shuffling.
+        
+        Parameters:
+        - data_catalog: DataCatalog object specifying the data to be loaded.
+        """
+        self.data_catalog = data_catalog
+        self.dataset = DataSet(data_catalog, raw_data_path)  # Load the dataset
+
+    def _data_generator(self, indices):
+        """
+        Generator that yields individual samples of data based on the provided indices.
+        
+        Parameters:
+        - indices: List or array of indices to load the data.
+        """
+        for idx in indices:
+            yield self.dataset[idx]  # Yield individual samples based on the indices
+
+    def create_keras_tensor(self, indices):
+        """
+        Create a TensorFlow Dataset from the data generator using specific indices.
+        
+        Parameters:
+        - indices: List or array of indices to load the data.
+        
+        Returns:
+        - tf.data.Dataset: TensorFlow Dataset ready for model training or evaluation.
+        """
+        output_signature = (
+            tf.TensorSpec(shape=(None, 6), dtype=tf.float32),  # Time-series data with 6 features
+            tf.TensorSpec(shape=(), dtype=tf.int32)            # Activity labels
         )
         
-        return dataset
+        tf_dataset = tf.data.Dataset.from_generator(
+            lambda: self._data_generator(indices),
+            output_signature=output_signature
+        )
+        
+        return tf_dataset
 
-    def _generator(self, data_catalog: pd.DataFrame):
+    def load_experiment_data(self, indices):
         """
-        Generator function to yield windows of data and corresponding labels from the provided data catalog.
+        Load the data using the DataLoader for specific indices.
+        
+        Parameters:
+        - indices: List or array of indices to load the data.
+        
+        Returns:
+        - tf.data.Dataset: TensorFlow Dataset ready for model training or evaluation.
         """
-        for _, row in data_catalog.iterrows():
-            exp_id = row['exp_id']
-            user_id = row['user_id']
-            activity_id = row['activity_id']  # This is the target label (what you are predicting)
-            start_idx = row['start_index']
-            end_idx = row['end_index']
-            
-            # Load the raw accelerometer and gyroscope data for this experiment
-            acc_data, gyro_data = self._load_raw_data(exp_id, user_id)
-            
-            # Extract the relevant window of data
-            window = self._extract_window(acc_data, gyro_data, start_idx, end_idx)
-            
-            # Yield the window (features) and its corresponding label (activity_id)
-            yield window.astype(np.float32), np.array(activity_id-1, dtype=np.int32)  # Make sure activity_id is a scalar integer
+        return self.create_keras_tensor(indices)  # Use the generator to create the dataset
