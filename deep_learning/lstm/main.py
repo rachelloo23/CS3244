@@ -265,7 +265,7 @@ def main():
     )
 
     # Get the maximum number of epochs from the search space
-    max_epochs = max(search_space['epochs'].categories)
+    max_epochs = max(search_space['epochs'].categories)*10
 
     # Set up the Ray Tune Tuner
     tuner = tune.Tuner(
