@@ -1,0 +1,6 @@
+# Hyperparameters
+
+lstm_units: 102
+batch_size: 21
+dropout_rate: 0.5598117664813230
+epochs: 75
