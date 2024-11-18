@@ -4,6 +4,7 @@ This folder contains the implementation of a Gradient Boosting (XGBoost) model f
 
 ## Folder Structure
 
+```
 .
 ├── config/
 │   └── config.yaml             # Contains best model hyperparameters
@@ -23,6 +24,7 @@ This folder contains the implementation of a Gradient Boosting (XGBoost) model f
 │   └── xgb_tune_results_3.csv  # Additional tuning results
 ├── main.py                     # Main script for model training and evaluation
 └── tune.py                     # Script for hyperparameter tuning
+```
 
 ## Key Components
 
