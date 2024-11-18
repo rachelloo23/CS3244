@@ -9,6 +9,9 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classifi
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 import yaml
+from imblearn.over_sampling import SMOTE
+from collections import Counter
+
 # %%
 #Set random seed
 random_seed = 31
@@ -18,8 +21,15 @@ os.environ['PYTHONHASHSEED'] = str(random_seed)
 # %%
 train = pd.read_csv("../data/processed/train.csv")
 test = pd.read_csv("../data/processed/test.csv")
+train_8 = pd.read_csv("../data/processed/train_8.csv")
+test_8 = pd.read_csv("../data/processed/test_8.csv")
+train_9 = pd.read_csv("../data/processed/train_9.csv")
+test_9 = pd.read_csv("../data/processed/test_9.csv")
+
 print(train.head())
 print(test.head())
+print(train_8.head())
+print(test_8.head())
 # %%
 train = train.drop(["id"], axis=1)
 test = test.drop(["id"], axis=1)
@@ -33,11 +43,117 @@ y_train = y_train - 1
 y_test = test["label"] - 1
 X_test = test.drop(["label"], axis=1)
 
+X_train_8 = train_8.drop(["label"], axis=1)
+y_train_8 = train_8["label"]
+y_train_8 = y_train_8 - 1
+y_test_8 = test_8["label"] - 1
+X_test_8 = test_8.drop(["label"], axis=1)
+
+X_train_9 = train_9.drop(["label"], axis=1)
+y_train_9 = train_9["label"]
+y_train_9 = y_train_9 - 1
+y_test_9 = test_9["label"] - 1
+X_test_9 = test_9.drop(["label"], axis=1)
 # %%
 # Standardize the features
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
+X_train_8 = scaler.fit_transform(X_train_8)
+X_test_8 = scaler.transform(X_test_8)
+X_train_9 = scaler.fit_transform(X_train_9)
+X_test_9 = scaler.transform(X_test_9)
+
+# %%
+def writeResults(model, X_train, y_train, X_test, y_test, filename):
+    """
+    Evaluate the model and save the confusion matrix and classification reports to a text file.
+
+    Parameters:
+    - model: Trained model to evaluate.
+    - X_train: Training feature set.
+    - y_train: Training labels.
+    - X_test: Test feature set.
+    - y_test: Test labels.
+    - filename: Name of the output text file (string).
+    """
+    # Evaluate and print training and test set scores
+    train_score = model.score(X_train, y_train)
+    test_score = model.score(X_test, y_test)
+    print('Model - Training set score: {:.4f}'.format(train_score))
+    print('Model - Test set score: {:.4f}'.format(test_score))
+
+    # Predict on the training and test sets
+    y_train_pred = model.predict(X_train)
+    y_test_pred = model.predict(X_test)
+
+    # Compute confusion matrix for the test set
+    cm = confusion_matrix(y_test, y_test_pred)
+
+    # Generate classification reports
+    report_train = classification_report(y_train, y_train_pred)
+    report_test = classification_report(y_test, y_test_pred)
+
+    # Save confusion matrix and classification reports to a text file
+    with open(filename, 'w') as f:
+        # Write confusion matrix
+        f.write('Confusion Matrix for Test Set:\n')
+        f.write(str(cm))
+        f.write('\n\n')
+
+        # Write classification report for the training set
+        f.write('Classification Report for Training Set:\n')
+        f.write(report_train)
+        f.write('\n\n')
+
+        # Write classification report for the test set
+        f.write('Classification Report for Test Set:\n')
+        f.write(report_test)
+
+    # Indicate that the results have been saved
+    print(f'Results have been saved to {filename}')
+# %%
+# 1. Default params on original data
+# 2. Default params on feature selected data
+# 3. Default params on oversampled original data
+# 4. Default params on oversampled feature selected data
+# 5. Tune on the best score from 1, 2, 3, 4.
+# %%
+# 1. Default params on original data
+xgb = XGBClassifier(
+    objective="multi:softmax",
+    random_state=random_seed,
+    eval_metric="mlogloss"
+)
+xgb.fit(X_train, y_train)
+filename = "./results/defOrig.txt"
+writeResults(xgb, X_train, y_train, X_test, y_test, filename)
+# %%
+# 2. Default params on feature selected data
+xgb.fit(X_train_8, y_train_8)
+filename = "./results/defFeat_8.txt"
+writeResults(xgb, X_train_8, y_train_8, X_test_8, y_test_8, filename)
+xgb.fit(X_train_9, y_train_9)
+filename = "./results/defFeat_9.txt"
+writeResults(xgb, X_train_9, y_train_9, X_test_9, y_test_9, filename)
+# %%
+# 3. Default params on oversampled original data
+smote = SMOTE(random_state=random_seed)
+X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
+xgb.fit(X_train_smote, y_train_smote)
+filename = "./results/defOrigSmote.txt"
+writeResults(xgb, X_train_smote, y_train_smote, X_test, y_test, filename)
+# %%
+# 4. Default params on oversampled feature selected data
+smote = SMOTE(random_state=random_seed)
+X_train_smote_8, y_train_smote_8 = smote.fit_resample(X_train_8, y_train_8)
+xgb.fit(X_train_smote_8, y_train_smote_8)
+filename = "./results/defFeatSmote_8.txt"
+writeResults(xgb, X_train_smote_8, y_train_smote_8, X_test_8, y_test_8, filename)
+X_train_smote_9, y_train_smote_9 = smote.fit_resample(X_train_9, y_train_9)
+xgb.fit(X_train_smote_9, y_train_smote_9)
+filename = "./results/defFeatSmote_9.txt"
+writeResults(xgb, X_train_smote_9, y_train_smote_9, X_test_9, y_test_9, filename)
 # %%
 # Load the best hyperparameters for XGBClassifier
 def load_config(config_path, config_name):
@@ -49,6 +165,8 @@ config = load_config(CONFIG_PATH, "config.yaml")
 print(config)
 # %%
 # Train the final models with the best hyperparameters
+smote = SMOTE(random_state=random_seed)
+X_train_smote_8, y_train_smote_8 = smote.fit_resample(X_train_8, y_train_8)
 xgb_tuned = XGBClassifier(
     n_estimators=config['n_estimators'],
     max_depth=config['max_depth'],
@@ -60,154 +178,7 @@ xgb_tuned = XGBClassifier(
     reg_lambda=config['reg_lambda'],
     random_state=random_seed
 )
-xgb_tuned.fit(X_train, y_train)
-
-# Print the scores on the training and validation set
-print('XGBoost - Training set score: {:.4f}'.format(xgb_tuned.score(X_train, y_train)))
-print('XGBoost - Test set score: {:.4f}'.format(xgb_tuned.score(X_test, y_test)))
-# %%
-# Predict on the train set
-y_train_pred_xgb = xgb_tuned.predict(X_train)
-
-# Predict on the test set
-y_test_pred_xgb = xgb_tuned.predict(X_test)
-
-# Compute the confusion matrix
-cm_xgb = confusion_matrix(y_test, y_test_pred_xgb)
-
-print('XGBoost Confusion matrix\n\n', cm_xgb)
-
-# Print classification metrics for train set
-print('\nXGBoost Classification Report for Train Set\n')
-print(classification_report(y_train, y_train_pred_xgb))
-
-# Print classification metrics for test set
-print('\nXGBoost Classification Report for Test Set\n')
-print(classification_report(y_test, y_test_pred_xgb))
-# %%
-# Pre-standardisation
-# XGBoost - Training set score: 0.9999
-# XGBoost - Test set score: 0.9099
-# XGBoost Confusion matrix
-
-# XGBoost Confusion matrix
-
-#  [[480   4  12   0   0   0   0   0   0   0   0   0]
-#  [ 40 426   4   0   0   0   0   0   0   0   1   0]
-#  [  8  39 373   0   0   0   0   0   0   0   0   0]
-#  [  0   0   0 422  83   0   1   1   1   0   0   0]
-#  [  0   0   0  42 514   0   0   0   0   0   0   0]
-#  [  0   0   0   0   0 545   0   0   0   0   0   0]
-#  [  0   2   0   1   1   0  18   0   0   0   1   0]
-#  [  0   0   0   0   0   0   0  10   0   0   0   0]
-#  [  0   0   0   0   0   0   0   0  26   0   6   0]
-#  [  0   0   0   0   0   0   0   1   0  17   0   7]
-#  [  2   0   0   3   0   1   1   1   9   0  32   0]
-#  [  1   0   0   0   0   0   0   1   0  10   1  14]]
-
-# XGBoost Classification Report for Train Set
-
-#               precision    recall  f1-score   support
-
-#            0       1.00      1.00      1.00      1226
-#            1       1.00      1.00      1.00      1073
-#            2       1.00      1.00      1.00       987
-#            3       1.00      1.00      1.00      1293
-#            4       1.00      1.00      1.00      1423
-#            5       1.00      1.00      1.00      1413
-#            6       1.00      1.00      1.00        47
-#            7       1.00      1.00      1.00        23
-#            8       1.00      1.00      1.00        75
-#            9       1.00      1.00      1.00        60
-#           10       1.00      1.00      1.00        90
-#           11       1.00      0.98      0.99        57
-
-#     accuracy                           1.00      7767
-#    macro avg       1.00      1.00      1.00      7767
-# weighted avg       1.00      1.00      1.00      7767
-
-
-# XGBoost Classification Report for Test Set
-
-#               precision    recall  f1-score   support
-
-#            0       0.90      0.97      0.93       496
-#            1       0.90      0.90      0.90       471
-#            2       0.96      0.89      0.92       420
-#            3       0.90      0.83      0.86       508
-#            4       0.86      0.92      0.89       556
-#            5       1.00      1.00      1.00       545
-#            6       0.90      0.78      0.84        23
-#            7       0.71      1.00      0.83        10
-#            8       0.72      0.81      0.76        32
-#            9       0.63      0.68      0.65        25
-#           10       0.78      0.65      0.71        49
-#           11       0.67      0.52      0.58        27
-
-#     accuracy                           0.91      3162
-#    macro avg       0.83      0.83      0.82      3162
-# weighted avg       0.91      0.91      0.91      3162
-
-# Post-standardisation
-# XGBoost - Training set score: 1.0000
-# XGBoost - Test set score: 0.9051
-
-# XGBoost Confusion matrix
-
-#  [[480   4  12   0   0   0   0   0   0   0   0   0]
-#  [ 50 412   7   0   0   0   0   0   0   0   2   0]
-#  [ 16  35 369   0   0   0   0   0   0   0   0   0]
-#  [  0   0   0 423  81   0   1   2   1   0   0   0]
-#  [  0   0   0  42 514   0   0   0   0   0   0   0]
-#  [  0   0   0   0   0 545   0   0   0   0   0   0]
-#  [  0   3   0   1   1   0  18   0   0   0   0   0]
-#  [  0   0   0   0   0   0   0  10   0   0   0   0]
-#  [  0   0   0   0   0   0   0   1  25   0   6   0]
-#  [  0   0   0   0   0   0   0   1   0  17   0   7]
-#  [  2   0   0   2   0   1   1   1   8   0  33   1]
-#  [  1   0   0   0   0   0   0   1   0   8   1  16]]
-
-# XGBoost Classification Report for Train Set
-
-#               precision    recall  f1-score   support
-
-#            0       1.00      1.00      1.00      1226
-#            1       1.00      1.00      1.00      1073
-#            2       1.00      1.00      1.00       987
-#            3       1.00      1.00      1.00      1293
-#            4       1.00      1.00      1.00      1423
-#            5       1.00      1.00      1.00      1413
-#            6       1.00      1.00      1.00        47
-#            7       1.00      1.00      1.00        23
-#            8       1.00      1.00      1.00        75
-#            9       1.00      1.00      1.00        60
-#           10       1.00      1.00      1.00        90
-#           11       1.00      1.00      1.00        57
-
-#     accuracy                           1.00      7767
-#    macro avg       1.00      1.00      1.00      7767
-# weighted avg       1.00      1.00      1.00      7767
-
-
-# XGBoost Classification Report for Test Set
-
-#               precision    recall  f1-score   support
-
-#            0       0.87      0.97      0.92       496
-#            1       0.91      0.87      0.89       471
-#            2       0.95      0.88      0.91       420
-#            3       0.90      0.83      0.87       508
-#            4       0.86      0.92      0.89       556
-#            5       1.00      1.00      1.00       545
-#            6       0.90      0.78      0.84        23
-#            7       0.62      1.00      0.77        10
-#            8       0.74      0.78      0.76        32
-#            9       0.68      0.68      0.68        25
-#           10       0.79      0.67      0.73        49
-#           11       0.67      0.59      0.63        27
-
-#     accuracy                           0.91      3162
-#    macro avg       0.82      0.83      0.82      3162
-# weighted avg       0.91      0.91      0.90      3162
-
+xgb_tuned.fit(X_train_smote_8, y_train_smote_8)
+filename = "./results/tuned_FeatSmote_8.txt"
+writeResults(xgb_tuned, X_train_smote_8, y_train_smote_8, X_test_8, y_test_8, filename)
 # %%
