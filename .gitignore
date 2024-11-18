@@ -47,3 +47,5 @@ build/
 .idea/
 *.sublime-workspace
 *.sublime-project
+knn/pruning.py
+knn/random.py
