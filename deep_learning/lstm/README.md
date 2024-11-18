@@ -3,7 +3,7 @@
 This repository contains the implementation of an LSTM-based neural network model for activity recognition using time-series data. The project includes data preprocessing, model architecture definition, hyperparameter tuning, model training, and evaluation.
 
 ## Folder Structure
-
+```
 .
 ├── config/
 │   └── config.yaml             # Contains best model hyperparameters
@@ -19,6 +19,7 @@ This repository contains the implementation of an LSTM-based neural network mode
 ├── main.py                     # Script for hyperparameter tuning process
 ├── raw_data_preprocess.py      # Data loading and preprocessing (duplicate from scripts folder)
 ├── test.py                     # Script for training and testing the model
+```
 
 ### Key Components
 
