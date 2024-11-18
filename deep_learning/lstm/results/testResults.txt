@@ -1,0 +1,17 @@
+Test Loss: 0.6142633557319641
+Test Accuracy: 0.854651153087616
+Test AUC: 0.9707443714141846
+Test F1 Micro (from metrics): 0.8546510934829712
+Test F1 Macro (from metrics): 0.8528103828430176
+Test F1 Weighted (from metrics): 0.8541645407676697
+
+Confusion Matrix:
+[[19  1  6  0  0  0]
+ [ 0 32  5  0  0  0]
+ [ 2  0 35  0  0  0]
+ [ 1  0  0 21  2  0]
+ [ 2  0  2  4 16  0]
+ [ 0  0  0  0  0 24]]
+F1 Score (Micro): 0.8546511627906976
+F1 Score (Macro): 0.8528104575163399
+F1 Score (Weighted): 0.8541645495407465
