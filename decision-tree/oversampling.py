@@ -41,7 +41,7 @@ test.to_csv("../data/processed/test.csv", index=False)
 # %%
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import make_scorer, f1_score
+from sklearn.metrics import make_scorer, f1_score, classification_report
 from sklearn.preprocessing import StandardScaler
 from imblearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
@@ -67,6 +67,15 @@ print("Average F1 Score (with SMOTE and Standardization):", np.mean(scores))
 # Fit the pipeline on the training data and evaluate on the test set
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print("F1 Score on Test Set:", f1_score(y_test, y_pred, average='micro'))
+print(classification_report(y_test, y_pred, average='micro'))
 # F1 Score on Test Set: 0.8314358001265022
+# %%
+misclassified_indices = [i for i, (true, pred) in enumerate(zip(y_test.values.ravel(), y_pred)) if true != pred]
+print("Misclassified instances:")
+for i in misclassified_indices:
+    print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}, Features: {X_test.iloc[i].values}")
+
+print("Misclassified labels and index:")
+for i in misclassified_indices:
+    print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}")
 # %%

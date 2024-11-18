@@ -133,3 +133,12 @@ print(classification_report(y_test, y_pred))
 #   macro avg       0.71      0.66      0.67      3162
 #weighted avg       0.85      0.85      0.85      3162
 # %%
+misclassified_indices = [i for i, (true, pred) in enumerate(zip(y_test.values.ravel(), y_pred)) if true != pred]
+print("Misclassified instances:")
+for i in misclassified_indices:
+    print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}, Features: {X_test.iloc[i].values}")
+
+print("Misclassified labels and index:")
+for i in misclassified_indices:
+    print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}")
+# %%
