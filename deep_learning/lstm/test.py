@@ -186,7 +186,7 @@ def plot_training_history(history):
     plt.xlabel('Epoch')
     plt.grid(alpha=0.35)
     plt.legend()
-    plt.savefig('./fig/Train Loss.png', dpi=400)
+    plt.savefig('./fig/trainLoss.png', dpi=400)
     plt.show()
 
     # Plot training accuracy
@@ -197,7 +197,7 @@ def plot_training_history(history):
     plt.xlabel('Epoch')
     plt.grid(alpha=0.35)
     plt.legend()
-    plt.savefig('./fig/Train Accuracy.png', dpi=400)
+    plt.savefig('./fig/trainAccuracy.png', dpi=400)
     plt.show()
 
     # Plot F1 Macro
@@ -209,7 +209,7 @@ def plot_training_history(history):
         plt.xlabel('Epoch')
         plt.grid(alpha=0.35)
         plt.legend()
-        plt.savefig('./fig/Train F1 Macro.png', dpi=400)
+        plt.savefig('./fig/trainF1_Macro.png', dpi=400)
         plt.show()
 
     # Plot F1 Weighted
@@ -221,7 +221,7 @@ def plot_training_history(history):
         plt.xlabel('Epoch')
         plt.grid(alpha=0.35)
         plt.legend()
-        plt.savefig('./fig/Train F1 Weighted.png', dpi=400)
+        plt.savefig('./fig/trainF1_Weighted.png', dpi=400)
         plt.show()
 
 
