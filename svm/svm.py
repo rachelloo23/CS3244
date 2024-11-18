@@ -235,14 +235,24 @@ print("F1 Score on Test Set:", f1)
 # F1 Score on Test Set: 0.9424414927261227
 #%%
 
-# Get Misclassified instances
+# Identify misclassified instances (from tuned baseline model)
+best_model.fit(X_train, y_train)
+y_pred = best_model.predict(X_test)
 
-test_indices = y_test.index
-y_test_flattened = np.squeeze(y_test)
-# print(y_test_flattened.shape)  # Output: (3162,)
+# Identify misclassified instances and store their indices
+y_test_series = y_test.squeeze()  # Convert y_test to Series for comparison
+misclassified_indices = y_test_series[y_test_series != y_pred].index
 
-# Assuming y_pred is the model's predictions and test_indices matches the test set indices
-predictions = pd.DataFrame({'test index': test_indices, 'true_label': y_test_flattened, 'predicted_label': y_pred})
-predictions = predictions[predictions['true_label'] !=  predictions['predicted_label']]
+# Create DataFrame with misclassifications
+misclassified_df = pd.DataFrame({
+    'Index': misclassified_indices,
+    'True Label': y_test_series[misclassified_indices].values,
+    'Predicted Label': y_pred[misclassified_indices]
+})
 
-predictions.to_csv('linearsvc_predictions.csv', index=False)
+
+# print("Misclassified Instances:\n", misclassified_df)
+print("Total Misclassified Instances:", len(misclassified_df))
+# Total Misclassified Instances: 182
+
+misclassified_df.to_csv('linearsvc_misclassifications.csv', index=False)
