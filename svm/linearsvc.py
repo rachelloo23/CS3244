@@ -60,8 +60,7 @@ print(classification_report(y_test, y_pred))
 
 #%%
 # Baseline Model (default params, with feature selection, without oversampling)
-#######################################################################################################################
-# With Feature Selection
+
 train = train.drop(["id"], axis=1)
 test = test.drop(["id"], axis=1)
 
@@ -185,58 +184,71 @@ print(f1_score(y_test_8, model.predict(X_test_8), average='micro'))   # 0.926628
 
 #%%
 
-# Tune model 
+# Tune oversampled model 
 from sklearn.svm import LinearSVC
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.preprocessing import StandardScaler
-from scipy.stats import uniform
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import make_scorer, f1_score
 
-# Create a pipeline with scaling and LinearSVC
+
+# Define a pipeline with scaling and LinearSVC
 pipeline = Pipeline([
     ('scaler', StandardScaler()),
-    ('svc', LinearSVC(random_state=random_seed, max_iter=10000))
+    ('svc', LinearSVC(max_iter=5000, random_state=random_seed))  # Limit iterations
 ])
 
-# Define parameter distribution
-param_dist = {
-    'svc__C': uniform(0.01, 10),  # Test values between 0.01 and 10
-    'svc__loss': ['squared_hinge'],  # Focus on squared hinge for faster tuning
-    'svc__dual': [True, False]      # Both dual and primal formulations
+# Define a smaller hyperparameter grid
+param_grid = {
+    'svc__C': [0.1, 1, 10],  # Focused range
+    'svc__loss': ['squared_hinge']  # Single loss to simplify
 }
 
-# Randomized search with fewer iterations
-random_search = RandomizedSearchCV(
-    pipeline, param_dist, n_iter=10, cv=10, scoring='f1_micro', n_jobs=-1, random_state=random_seed, verbose=1
-)
+# 5-fold cross-validation to reduce load
+cv = KFold(n_splits=10, shuffle=True, random_state=random_seed)
 
-# Fit the model
-random_search.fit(X_train, y_train)
+# Scoring with weighted F1
+scoring = make_scorer(f1_score, average='micro')
 
-# Display the best parameters and score
-print("Best Parameters:", random_search.best_params_)
-print("Best F1 Score:", random_search.best_score_)
-# Best Parameters: {'svc__C': 1.3723134824601035, 'svc__dual': True, 'svc__loss': 'squared_hinge'}
-# Best F1 Score: 0.9290746195385371
+# GridSearchCV with smaller grid and reduced folds
+grid_search = GridSearchCV(pipeline, param_grid, scoring=scoring, cv=cv, n_jobs=-1, verbose=1)
+
+# Fit GridSearchCV on the reduced training set
+grid_search.fit(X_train_smote, y_train_smote)
+
+# Print best parameters and cross-validation score
+print("Best parameters:", grid_search.best_params_)
+print("Best cross-validated F1 score:", grid_search.best_score_)
+
+# Evaluate the best model on the full test set
+best_model = grid_search.best_estimator_
+y_pred = best_model.predict(X_test)
+test_f1 = f1_score(y_test, y_pred, average='weighted')
+print("Test set F1 score:", test_f1)
+
+# Best parameters: {'svc__C': 0.1, 'svc__loss': 'squared_hinge'}
+# Best cross-validated F1 score: 0.9936752372446286
+# Test set F1 score: 0.9421699808849964
+
 #%%
 # Use the best parameters from RandomizedSearchCV
-best_params = random_search.best_params_
-best_model = random_search.best_estimator_
+best_params = grid_search.best_params_
+best_model = grid_search.best_estimator_
 
-best_model.fit(X_train, y_train)
+best_model.fit(X_train_smote, y_train_smote)
 y_pred = best_model.predict(X_test)
 
-f1 = f1_score(y_train, best_model.predict(X_train), average='micro')  
+f1 = f1_score(y_train_smote, best_model.predict(X_train_smote), average='micro')  
 print("F1 Score on train Set:", f1)
-# F1 Score on train Set: 0.9980687524140595
-
 f1 = f1_score(y_test, y_pred, average='micro')  
 print("F1 Score on Test Set:", f1)
+
+# F1 Score on train Set: 0.9971304755211994
 # F1 Score on Test Set: 0.9424414927261227
 #%%
 
 # Identify misclassified instances (from tuned baseline model)
-best_model.fit(X_train, y_train)
+best_model.fit(X_train_smote, y_train_smote)
 y_pred = best_model.predict(X_test)
 
 # Identify misclassified instances and store their indices
