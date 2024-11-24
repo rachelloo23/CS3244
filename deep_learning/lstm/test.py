@@ -11,10 +11,16 @@ from sklearn.metrics import confusion_matrix, f1_score
 
 import tensorflow as tf
 from tensorflow.keras.metrics import AUC, F1Score
+from tensorflow.keras.models import load_model
 
 from raw_data_preprocess import DataCatalogProcessor, DataLoader
 from lstm import LSTMModel  
 from main import *
+
+random_seed = 31
+np.random.seed(random_seed)
+random.seed(random_seed)
+os.environ['PYTHONHASHSEED'] = str(random_seed)
 
 # Set up paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -61,7 +67,7 @@ def create_tf_dataset(
     data = dataLoader.load_experiment_data(indices)
 
     if repeat:
-        data = data.shuffle(buffer_size=len(indices))
+        data = data.shuffle(buffer_size=len(indices), seed=random_seed)
 
     # One-hot encode the labels
     data = data.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)))
@@ -116,6 +122,8 @@ def eval_lstm(model, test_dataset, number_of_eval_sample, batch_size, num_classe
     y_pred = []
 
     for x_batch, y_batch in test_dataset.take(steps):
+        print(x_batch)
+        print(x_batch.shape)
         # Get model predictions
         y_pred_batch = model.predict(x_batch)
         # Convert predictions and labels to class indices
@@ -186,7 +194,7 @@ def plot_training_history(history):
     plt.xlabel('Epoch')
     plt.grid(alpha=0.35)
     plt.legend()
-    plt.savefig('./fig/trainLoss.png', dpi=400)
+    plt.savefig('./fig/trainLoss_12.png', dpi=400)
     plt.show()
 
     # Plot training accuracy
@@ -197,7 +205,7 @@ def plot_training_history(history):
     plt.xlabel('Epoch')
     plt.grid(alpha=0.35)
     plt.legend()
-    plt.savefig('./fig/trainAccuracy.png', dpi=400)
+    plt.savefig('./fig/trainAccuracy_12.png', dpi=400)
     plt.show()
 
     # Plot F1 Macro
@@ -209,7 +217,7 @@ def plot_training_history(history):
         plt.xlabel('Epoch')
         plt.grid(alpha=0.35)
         plt.legend()
-        plt.savefig('./fig/trainF1_Macro.png', dpi=400)
+        plt.savefig('./fig/trainF1_Macro_12.png', dpi=400)
         plt.show()
 
     # Plot F1 Weighted
@@ -221,7 +229,7 @@ def plot_training_history(history):
         plt.xlabel('Epoch')
         plt.grid(alpha=0.35)
         plt.legend()
-        plt.savefig('./fig/trainF1_Weighted.png', dpi=400)
+        plt.savefig('./fig/trainF1_Weighted_12.png', dpi=400)
         plt.show()
 
 
@@ -235,10 +243,10 @@ def test():
     lstm_units = config['lstm_units']
     dropout_rate = config['dropout_rate']
     batch_size = config['batch_size']
-
+    learning_rate = config['learning_rate']
     # Prepare data catalog
     data_catalog_processor = DataCatalogProcessor(DATA_PATH, RAW_DATA_PATH)
-    data_catalog = prepare_data_catalog(data_catalog_processor)
+    data_catalog = prepare_data_catalog(data_catalog_processor, filter_unwanted=False)
     data_catalog = data_catalog.reset_index(drop=True)
 
     # Determine maximum padding length and number of classes
@@ -281,17 +289,19 @@ def test():
     )
 
     # Build and train the model
-    model = lstm_builder(num_classes, lstm_units, dropout_rate)
+    model = lstm_builder(num_classes, lstm_units, dropout_rate, learning_rate=learning_rate)
     history = train_lstm(model, train_dataset, len(train_idx), batch_size, epochs)
 
     # Save the trained model
-    model.save('./model/lstm_model.h5')
+    model.save('./model/lstm_model_12.keras')
+    loaded_model = load_model('./model/lstm_model_12.keras', custom_objects={'LSTMModel': LSTMModel})
+        
 
     # Plot training history
     plot_training_history(history)
 
     # Evaluate the model on the test dataset
-    eval_metrics = eval_lstm(model, test_dataset, len(test_idx), batch_size, num_classes)
+    eval_metrics = eval_lstm(loaded_model, test_dataset, len(test_idx), batch_size, num_classes)
 
 
 if __name__ == '__main__':
