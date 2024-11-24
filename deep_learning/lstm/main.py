@@ -1,5 +1,6 @@
 import os
 import datetime
+import random
 
 import numpy as np
 import pandas as pd
@@ -20,21 +21,59 @@ from raw_data_preprocess import DataCatalogProcessor, DataLoader
 from lstm import LSTMModel
 
 # Set up paths to data
+random_seed = 31
+np.random.seed(random_seed)
+random.seed(random_seed)
+os.environ['PYTHONHASHSEED'] = str(random_seed)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.abspath(os.path.join(SCRIPT_DIR, '../../data'))
 RAW_DATA_PATH = os.path.join(DATA_PATH, 'RawData')
 
 
-def prepare_data_catalog(catalog: DataCatalogProcessor) -> pd.DataFrame:
+# def prepare_data_catalog(catalog: DataCatalogProcessor) -> pd.DataFrame:
+#     """
+#     Load labels and activity data, compute window sizes, merge with activity names,
+#     and filter out unwanted activities.
+
+#     Parameters:
+#     - catalog: DataCatalogProcessor object specifying the data to be loaded.
+
+#     Returns:
+#     - filtered_data: A DataFrame containing the processed and filtered data catalog.
+#     """
+#     try:
+#         labels = catalog.load_labels()
+#         activity_labels = catalog.load_activity_labels()
+#     except FileNotFoundError as e:
+#         print(f"Error loading files: {e}")
+#         exit(1)
+
+#     # Compute window sizes (window_size = end_time - start_time) and sort
+#     labels = catalog.compute_window_size(labels)
+#     labels.sort_values(by='window_size', ascending=True, inplace=True)
+
+#     # Merge labels with activity names
+#     labels_with_activity = catalog.merge_labels_with_activity(labels, activity_labels)
+
+#     # Filter out unwanted activities (e.g., those containing 'TO')
+#     unwanted_activities = activity_labels[
+#         activity_labels['activity_name'].str.contains('TO')
+#     ]['activity_name'].tolist()
+#     filtered_data = catalog.drop_activity(labels_with_activity, unwanted_activities)
+
+#     return filtered_data
+
+def prepare_data_catalog(catalog: DataCatalogProcessor, filter_unwanted: bool = True) -> pd.DataFrame:
     """
     Load labels and activity data, compute window sizes, merge with activity names,
-    and filter out unwanted activities.
+    and conditionally filter out unwanted activities based on the filter_unwanted flag.
 
     Parameters:
     - catalog: DataCatalogProcessor object specifying the data to be loaded.
+    - filter_unwanted: bool, if True, filter out unwanted activities, otherwise include all.
 
     Returns:
-    - filtered_data: A DataFrame containing the processed and filtered data catalog.
+    - data: A DataFrame containing the processed data catalog, filtered based on the flag.
     """
     try:
         labels = catalog.load_labels()
@@ -50,13 +89,16 @@ def prepare_data_catalog(catalog: DataCatalogProcessor) -> pd.DataFrame:
     # Merge labels with activity names
     labels_with_activity = catalog.merge_labels_with_activity(labels, activity_labels)
 
-    # Filter out unwanted activities (e.g., those containing 'TO')
-    unwanted_activities = activity_labels[
-        activity_labels['activity_name'].str.contains('TO')
-    ]['activity_name'].tolist()
-    filtered_data = catalog.drop_activity(labels_with_activity, unwanted_activities)
+    # Optionally filter out unwanted activities
+    if filter_unwanted:
+        unwanted_activities = activity_labels[
+            activity_labels['activity_name'].str.contains('TO')
+        ]['activity_name'].tolist()
+        data = catalog.drop_activity(labels_with_activity, unwanted_activities)
+    else:
+        data = labels_with_activity
 
-    return filtered_data
+    return data
 
 
 def create_tf_dataset(
@@ -78,7 +120,7 @@ def create_tf_dataset(
     """
     data_loader = DataLoader(data_catalog, path)
     data = data_loader.load_experiment_data(indices)
-    data = data.shuffle(buffer_size=len(indices))
+    data = data.shuffle(buffer_size=len(indices), seed=random_seed)
 
     # One-hot encode the labels
     data = data.map(lambda x, y: (x, tf.one_hot(y, depth=num_classes)))
@@ -92,7 +134,7 @@ def create_tf_dataset(
     return padded_data.repeat()
 
 
-def lstm_builder(num_classes, lstm_units, dropout_rate):
+def lstm_builder(num_classes, lstm_units, dropout_rate, learning_rate):
     """
     Build and compile an LSTM model for activity recognition.
 
@@ -106,7 +148,7 @@ def lstm_builder(num_classes, lstm_units, dropout_rate):
     """
     model = LSTMModel(num_classes, lstm_units, dropout_rate)
     model.compile(
-        optimizer='adam',
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss='categorical_crossentropy',
         metrics=[
             'accuracy',
@@ -149,10 +191,9 @@ def lstm_tune(config):
 
     # Prepare data
     data_catalog_processor = DataCatalogProcessor(DATA_PATH, RAW_DATA_PATH)
-    data_catalog = prepare_data_catalog(data_catalog_processor)
+    data_catalog = prepare_data_catalog(data_catalog_processor, filter_unwanted=False)
     max_padding = data_catalog['window_size'].max()
     num_classes = data_catalog['activity_id'].nunique()
-
     # Encode labels
     label_encoder = LabelEncoder()
     data_catalog['encoded_labels'] = label_encoder.fit_transform(data_catalog['activity_id'])
@@ -161,7 +202,7 @@ def lstm_tune(config):
     train_data_catalog, _ = train_test_split(
         data_catalog,
         test_size=0.2,
-        random_state=31,
+        random_state=random_seed,
         stratify=data_catalog['encoded_labels']
     )
 
@@ -170,9 +211,9 @@ def lstm_tune(config):
     lstm_units = config['lstm_units']
     dropout_rate = config['dropout_rate']
     batch_size = config['batch_size']
-
+    learning_rate = config['learning_rate']
     # Set up K-fold cross-validation
-    kfold = KFold(n_splits=5, shuffle=True, random_state=123)
+    kfold = KFold(n_splits=5, shuffle=True, random_state=random_seed)
 
     # Get the trial directory from Ray Tune for logging
     trial_dir = session.get_trial_dir()
@@ -199,7 +240,7 @@ def lstm_tune(config):
         )
 
         # Build and compile the model
-        model = lstm_builder(num_classes, lstm_units, dropout_rate)
+        model = lstm_builder(num_classes, lstm_units, dropout_rate, learning_rate)
 
         # Create a TensorBoard writer for this fold
         log_dir = os.path.join(trial_dir, f"fold_{fold+1}")
@@ -253,8 +294,9 @@ def main():
     search_space = {
         'lstm_units': tune.randint(32, 129),  # Upper bound is exclusive
         'dropout_rate': tune.uniform(0.2, 0.7),
-        'epochs': tune.choice([75]),  # Using a fixed number of epochs
-        'batch_size': tune.randint(8, 65)
+        'epochs': tune.choice([100]),  # Using a fixed number of epochs
+        'batch_size': tune.randint(8, 65),
+        'learning_rate': tune.loguniform(1e-5, 1e-1)
     }
 
     # Set up the hyperparameter optimization algorithm (Optuna)
@@ -265,7 +307,7 @@ def main():
     )
 
     # Get the maximum number of epochs from the search space
-    max_epochs = max(search_space['epochs'].categories)*10
+    max_epochs = max(search_space['epochs'].categories)
 
     # Set up the Ray Tune Tuner
     tuner = tune.Tuner(
@@ -286,7 +328,7 @@ def main():
         ),
         param_space=search_space,
         run_config=ray.air.RunConfig(
-            storage_path=os.path.abspath("./log/exp"),
+            storage_path=os.path.abspath("./log/exp_12_classes"),
             name=f"tune_{timestamp}"
         )
     )
