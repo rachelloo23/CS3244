@@ -52,3 +52,33 @@ Classification Report for Test Set:
     accuracy                           0.92      3162
    macro avg       0.87      0.86      0.86      3162
 weighted avg       0.92      0.92      0.92      3162
+
+
+Per-Class Metrics:
+Class Accuracies:
+Class 0: Accuracy = 0.9804
+Class 1: Accuracy = 0.9687
+Class 2: Accuracy = 0.9820
+Class 3: Accuracy = 0.9633
+Class 4: Accuracy = 0.9639
+Class 5: Accuracy = 0.9994
+Class 6: Accuracy = 0.9984
+Class 7: Accuracy = 0.9997
+Class 8: Accuracy = 0.9962
+Class 9: Accuracy = 0.9953
+Class 10: Accuracy = 0.9934
+Class 11: Accuracy = 0.9949
+
+Class Misclassification Rate:
+Class 0: Misclassification Rate = 0.0196
+Class 1: Misclassification Rate = 0.0313
+Class 2: Misclassification Rate = 0.0180
+Class 3: Misclassification Rate = 0.0367
+Class 4: Misclassification Rate = 0.0361
+Class 5: Misclassification Rate = 0.0006
+Class 6: Misclassification Rate = 0.0016
+Class 7: Misclassification Rate = 0.0003
+Class 8: Misclassification Rate = 0.0038
+Class 9: Misclassification Rate = 0.0047
+Class 10: Misclassification Rate = 0.0066
+Class 11: Misclassification Rate = 0.0051
