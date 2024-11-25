@@ -11,7 +11,7 @@ from xgboost import XGBClassifier
 import yaml
 from imblearn.over_sampling import SMOTE
 from collections import Counter
-
+from module import *
 # %%
 #Set random seed
 random_seed = 31
@@ -63,55 +63,6 @@ X_train_8 = scaler.fit_transform(X_train_8)
 X_test_8 = scaler.transform(X_test_8)
 X_train_9 = scaler.fit_transform(X_train_9)
 X_test_9 = scaler.transform(X_test_9)
-
-# %%
-def writeResults(model, X_train, y_train, X_test, y_test, filename):
-    """
-    Evaluate the model and save the confusion matrix and classification reports to a text file.
-
-    Parameters:
-    - model: Trained model to evaluate.
-    - X_train: Training feature set.
-    - y_train: Training labels.
-    - X_test: Test feature set.
-    - y_test: Test labels.
-    - filename: Name of the output text file (string).
-    """
-    # Evaluate and print training and test set scores
-    train_score = model.score(X_train, y_train)
-    test_score = model.score(X_test, y_test)
-    print('Model - Training set score: {:.4f}'.format(train_score))
-    print('Model - Test set score: {:.4f}'.format(test_score))
-
-    # Predict on the training and test sets
-    y_train_pred = model.predict(X_train)
-    y_test_pred = model.predict(X_test)
-
-    # Compute confusion matrix for the test set
-    cm = confusion_matrix(y_test, y_test_pred)
-
-    # Generate classification reports
-    report_train = classification_report(y_train, y_train_pred)
-    report_test = classification_report(y_test, y_test_pred)
-
-    # Save confusion matrix and classification reports to a text file
-    with open(filename, 'w') as f:
-        # Write confusion matrix
-        f.write('Confusion Matrix for Test Set:\n')
-        f.write(str(cm))
-        f.write('\n\n')
-
-        # Write classification report for the training set
-        f.write('Classification Report for Training Set:\n')
-        f.write(report_train)
-        f.write('\n\n')
-
-        # Write classification report for the test set
-        f.write('Classification Report for Test Set:\n')
-        f.write(report_test)
-
-    # Indicate that the results have been saved
-    print(f'Results have been saved to {filename}')
 # %%
 # 1. Default params on original data
 # 2. Default params on feature selected data
@@ -156,10 +107,6 @@ filename = "./results/defFeatSmote_9.txt"
 writeResults(xgb, X_train_smote_9, y_train_smote_9, X_test_9, y_test_9, filename)
 # %%
 # Load the best hyperparameters for XGBClassifier
-def load_config(config_path, config_name):
-    with open(os.path.join(config_path, config_name)) as file:
-        config = yaml.safe_load(file)
-    return config
 CONFIG_PATH = "config/"
 config = load_config(CONFIG_PATH, "config.yaml")
 print(config)
