@@ -67,7 +67,7 @@ print("Average F1 Score (with SMOTE and Standardization):", np.mean(scores))
 # Fit the pipeline on the training data and evaluate on the test set
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred, digits=5))
 # precision    recall  f1-score   support
 
 #           1       0.77      0.89      0.82       496
@@ -95,33 +95,21 @@ for i in misclassified_indices:
 print("Misclassified labels and index:")
 for i in misclassified_indices:
     print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}")
-# Misclassified instances:
-#Index: 17, True label: 4, Predicted label: 5, Features: [ 4.67666638e-02 -4.25429914e-04 -3.94582187e-02 -9.87815840e-01
-# -8.85041593e-01 -9.57315721e-01 -9.87589896e-01 -8.99341030e-01
-# -9.63037434e-01 -7.79182401e-01 -6.07351255e-01 -6.89452587e-01
-#  8.39739284e-01  6.74468728e-01  6.43144427e-01 -9.51434626e-01
-# -9.99818812e-01 -9.95131408e-01 -9.98590413e-01 -9.87410212e-01
-# -9.26221629e-01 -9.68585437e-01 -3.74040321e-01 -3.92213233e-01
-# -6.81048684e-01  3.64322240e-01 -3.79378631e-01  6.19008442e-01
-# -8.37176994e-01  8.07849009e-02 -1.75705451e-01  1.07777986e-01
-#  1.94245062e-01  3.60795010e-01 -3.09285304e-01  7.18113962e-02
-#  1.63619749e-01  1.51538256e-01 -2.95321808e-01  4.50390324e-01
-#  9.48670845e-01 -1.22339985e-01  1.73437641e-01 -9.79429395e-01
-# -8.84560524e-01 -9.56492992e-01 -9.79258180e-01 -8.97616490e-01
-# -9.57902105e-01  8.84651253e-01 -1.31096676e-01  1.75631662e-01
-#  9.65094104e-01 -1.57457052e-01  1.51338810e-01 -2.78613942e-01
-#  8.62011305e-01 -9.75942787e-01 -9.44233608e-01 -9.78643691e-01
-# -9.35705768e-01 -9.60408549e-01 -1.00000000e+00 -1.00000000e+00
-# -1.24805935e-01 -4.86215960e-01  4.84110406e-01 -4.82225225e-01
-#  4.80569683e-01 -8.88358680e-01  8.87907591e-01 -8.87633795e-01
-#  8.86964295e-01 -8.95440275e-01  8.98134910e-01 -9.00604207e-01
-#  9.01808437e-01  6.77833801e-01 -2.39746421e-02  7.18813658e-01
-#  7.41676242e-02 -8.84295665e-02 -3.85522045e-02 -9.87661480e-01
-# -9.50622663e-01 -9.80487511e-01 -9.89832041e-01 -9.54875713e-01
-# -9.79228138e-01 -9.79618443e-01 -9.66611470e-01 -9.78504953e-01
-#  9.86672796e-01  9.33142761e-01  9.78097237e-01 -9.78005000e-01
-#...
-#Index: 3157, True label: 2, Predicted label: 1
-#Index: 3158, True label: 2, Predicted label: 1
-#Index: 3159, True label: 2, Predicted label: 1
-#Index: 3160, True label: 2, Predicted label: 1
+# %%
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+
+# Compute the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+
+# Display the confusion matrix using a heatmap
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot(cmap = "OrRd_r")
+plt.title('Confusion Matrix for Decision Tree Model')
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.show()
+
+print("Confusion Matrix:")
+print(cm)
+# %%

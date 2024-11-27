@@ -93,7 +93,7 @@ print("Best hyperparameters found: ", random_search.best_params_)
 y_pred = random_search.best_estimator_.predict(X_test)
 
 from sklearn.metrics import classification_report
-print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred, digits = 5))
 # %%
 # Results
 #Best hyperparameters found:  {'classifier__min_samples_split': np.int64(6), 'classifier__min_samples_leaf': np.int64(6), 'classifier__max_features': None, 'classifier__max_depth': None, 'classifier__criterion': 'entropy'}

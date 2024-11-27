@@ -112,7 +112,7 @@ print("Best hyperparameters found: ", random_search.best_params_)
 y_pred = random_search.best_estimator_.predict(X_test_selected)
 
 from sklearn.metrics import classification_report
-print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred, digits=5))
 # Best hyperparameters found:  {'classifier__min_samples_split': np.int64(5), 'classifier__min_samples_leaf': np.int64(9), 'classifier__max_features': None, 'classifier__max_depth': 40, 'classifier__criterion': 'entropy'}
 #              precision    recall  f1-score   support
 #
@@ -171,3 +171,36 @@ for i in misclassified_indices:
 #Index: 3114, True label: 2, Predicted label: 3
 #Index: 3154, True label: 2, Predicted label: 1
 #Index: 3160, True label: 2, Predicted label: 1
+
+# %%
+from sklearn.feature_selection import RFECV
+
+rfecv = RFECV(estimator=decision_tree_model, cv=5, scoring='f1_weighted')  # Adjust scoring metric as needed
+rfecv.fit(X_train, y_train)
+
+print("Optimal number of features:", rfecv.n_features_)
+print("Selected features:", X_train.columns[rfecv.support_])
+#Optimal number of features: 21
+#Selected features: Index([  1,   3,   9,  37,  49,  50,  51,  52,  53,  57,  69, 139, 166, 197,
+#       209, 274, 418, 448, 451, 503, 559],
+#      dtype='int64')
+# %%
+plt.figure(figsize=(10, 6))
+plt.plot(
+    range(1, len(rfecv.cv_results_['mean_test_score']) + 1),  # X-axis: Number of features
+    rfecv.cv_results_['mean_test_score'],                    # Y-axis: Mean F1 score
+    marker='o',
+    label='Mean F1 Score'
+)
+plt.xlabel("Number of Features Selected")
+plt.ylabel("Cross-Validated F1 Score")
+plt.title("RFECV - Feature Selection with F1 Scoring")
+plt.axvline(rfecv.n_features_, color="red", linestyle="--", label="Optimal Features")
+plt.legend()
+plt.grid()
+plt.show()
+# %%
+print(f"Optimal number of features: {rfecv.n_features_}")
+selected_features = np.array(features)[rfecv.support_]  # Assuming 'feature_names' is a list of all feature names
+print(f"Selected features: {selected_features}")
+# %%

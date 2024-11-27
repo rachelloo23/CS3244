@@ -48,7 +48,7 @@ print("f1 score:", accuracy)
 
 print(classification_report(y_test, y_pred))
 
-#precision    recall  f1-score   support
+#               precision    recall  f1-score   support
 #
 #           1       0.94      0.99      0.97       496
 #           2       0.96      0.94      0.95       471
