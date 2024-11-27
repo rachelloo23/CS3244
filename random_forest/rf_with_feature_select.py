@@ -103,12 +103,12 @@ else:
 
 # Define the search space for Random Forest hyperparameters
 param_dist_rf = {
-    "n_estimators": tune.randint(50, 300),
-    "max_depth": tune.randint(3, 30),
-    "max_features": tune.choice(["sqrt", "log2", None]),
-    "min_samples_split": tune.randint(2, 10),
-    "min_samples_leaf": tune.randint(1, 4),
-    "bootstrap": tune.choice([True, False])
+    "n_estimators": tune.randint(50, 150),  
+    "max_depth": tune.randint(3, 15),  
+    "max_features": tune.choice(["sqrt", "log2"]),  
+    "min_samples_split": tune.randint(2, 5),  
+    "min_samples_leaf": tune.randint(1, 3),  
+    "bootstrap": tune.choice([True, False])  
 }
 
 # Define the objective function for Random Forest tuning
@@ -124,7 +124,7 @@ def objective_rf(config):
     )
     
     # Define stratified K-fold with standardization within each fold
-    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     scores = []
     
     for train_index, val_index in skf.split(X_train, y_train):

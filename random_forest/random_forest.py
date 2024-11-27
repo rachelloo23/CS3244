@@ -43,13 +43,14 @@ X_train, y_train = smote.fit_resample(X_train, y_train)
 
 # Define the search space for Random Forest hyperparameters
 param_dist_rf = {
-    "n_estimators": tune.randint(50, 300),
-    "max_depth": tune.randint(3, 30),
-    "max_features": tune.choice(["sqrt", "log2", None]),
-    "min_samples_split": tune.randint(2, 10),
-    "min_samples_leaf": tune.randint(1, 4),
-    "bootstrap": tune.choice([True, False])
+    "n_estimators": tune.randint(50, 150),  
+    "max_depth": tune.randint(3, 15),  
+    "max_features": tune.choice(["sqrt", "log2"]),  
+    "min_samples_split": tune.randint(2, 5),  
+    "min_samples_leaf": tune.randint(1, 3),  
+    "bootstrap": tune.choice([True, False])  
 }
+
 
 # Define the objective function for Random Forest tuning
 def objective_rf(config):
@@ -64,7 +65,7 @@ def objective_rf(config):
     )
     
     # Define stratified K-fold with standardization within each fold
-    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     scores = []
     
     for train_index, val_index in skf.split(X_train, y_train):
@@ -98,7 +99,7 @@ analysis_rf = tune.Tuner(
         metric="f1",
         mode="max",
         scheduler=ASHAScheduler(),
-        num_samples=20
+        num_samples=10
     ),
     param_space=param_dist_rf,
     run_config=RunConfig(storage_path=os.path.abspath("log_rf"), name="rf_trial_1", log_to_file=True)
