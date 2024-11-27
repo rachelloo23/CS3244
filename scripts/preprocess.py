@@ -20,13 +20,13 @@ y_train.iloc[:,0].value_counts().plot(kind="bar")
 # %%
 display(features)
 # %%
-def create_df(X_train, subject_id, y_train, features):
+def create_df(X_df, subject_id, y_df, features):
     # Create a copy of the X_train dataframe
-    train = X_train.copy()
+    train = X_df.copy()
 
     # Add "id" and "label" columns
     train["id"] = subject_id.iloc[:, 0]
-    train["label"] = y_train.iloc[:, 0]
+    train["label"] = y_df.iloc[:, 0]
 
     # Use feature names from 'features'
     feature_names = features.iloc[:, 0].values
