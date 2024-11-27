@@ -188,7 +188,7 @@ ray.shutdown()
 
 
 
-###### After feature selection #########
+###### After feature selection and oversampling #########
 # Best hyperparameters for RandomForestClassifier:  {'n_estimators': 152, 'max_depth': 22, 'max_features': 'sqrt', 'min_samples_split': 8, 'min_samples_leaf': 3, 'bootstrap': False}
 # Random Forest - Training set score: 0.9999
 # Random Forest - Test set score: 0.9152
