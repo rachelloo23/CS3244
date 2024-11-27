@@ -98,8 +98,12 @@ else:
     )
     explanation_list = explanation.as_list(label=fallback_label)
 
-# Plot the feature importance for the misclassified instance
-features, weights = zip(*explanation_list)
+
+# Sort explanation_list by feature weight in descending order (positive first, then negative)
+explanation_list_sorted = sorted(explanation_list, key=lambda x: x[1], reverse=True)
+
+# Separate features and weights
+features, weights = zip(*explanation_list_sorted)
 
 plt.figure(figsize=(8, 6))
 plt.barh(features, weights)
