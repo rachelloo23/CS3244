@@ -158,7 +158,7 @@ analysis_rf = tune.Tuner(
         metric="f1",
         mode="max",
         scheduler=ASHAScheduler(),
-        num_samples=20
+        num_samples=10
     ),
     param_space=param_dist_rf,
     run_config=RunConfig(storage_path=os.path.abspath("log_rf"), name="rf_trial_1", log_to_file=True)
@@ -219,7 +219,8 @@ with open(results_path, "w") as results_file:
     results_file.write("Confusion Matrix:\n")
     results_file.write(str(cm_rf) + "\n\n")
     results_file.write("Classification Report:\n")
-    results_file.write(classification_report + "\n")
+    # Fix the issue here by calling the classification_report function and writing the output
+    results_file.write(classification_report(y_test, y_test_pred_rf) + "\n")
 
 # Save the tuning results
 rf_df.to_csv("rf_results.csv", index=False)
