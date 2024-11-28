@@ -1,0 +1,84 @@
+Confusion Matrix for Test Set:
+[[475  16   5   0   0   0   0   0   0   0   0   0]
+ [ 29 438   4   0   0   0   0   0   0   0   0   0]
+ [  7  43 370   0   0   0   0   0   0   0   0   0]
+ [  0   0   0 434  72   0   0   1   0   0   1   0]
+ [  0   0   0  38 518   0   0   0   0   0   0   0]
+ [  0   0   0   0   0 544   0   0   0   0   1   0]
+ [  0   0   0   2   0   0  20   0   0   0   1   0]
+ [  0   0   0   0   0   0   0  10   0   0   0   0]
+ [  0   0   0   0   0   0   0   0  25   0   7   0]
+ [  0   0   0   0   0   0   1   0   0  16   0   8]
+ [  2   0   0   1   0   0   0   0   9   0  36   1]
+ [  0   0   0   0   0   0   1   1   0   6   0  19]]
+
+Classification Report for Training Set:
+              precision    recall  f1-score   support
+
+           0     1.0000    1.0000    1.0000      1423
+           1     1.0000    1.0000    1.0000      1423
+           2     1.0000    1.0000    1.0000      1423
+           3     1.0000    1.0000    1.0000      1423
+           4     1.0000    1.0000    1.0000      1423
+           5     1.0000    1.0000    1.0000      1423
+           6     1.0000    1.0000    1.0000      1423
+           7     1.0000    1.0000    1.0000      1423
+           8     1.0000    1.0000    1.0000      1423
+           9     1.0000    1.0000    1.0000      1423
+          10     1.0000    1.0000    1.0000      1423
+          11     1.0000    1.0000    1.0000      1423
+
+    accuracy                         1.0000     17076
+   macro avg     1.0000    1.0000    1.0000     17076
+weighted avg     1.0000    1.0000    1.0000     17076
+
+
+Classification Report for Test Set:
+              precision    recall  f1-score   support
+
+           0     0.9259    0.9577    0.9415       496
+           1     0.8813    0.9299    0.9050       471
+           2     0.9763    0.8810    0.9262       420
+           3     0.9137    0.8543    0.8830       508
+           4     0.8780    0.9317    0.9040       556
+           5     1.0000    0.9982    0.9991       545
+           6     0.9091    0.8696    0.8889        23
+           7     0.8333    1.0000    0.9091        10
+           8     0.7353    0.7812    0.7576        32
+           9     0.7273    0.6400    0.6809        25
+          10     0.7826    0.7347    0.7579        49
+          11     0.6786    0.7037    0.6909        27
+
+    accuracy                         0.9187      3162
+   macro avg     0.8534    0.8568    0.8537      3162
+weighted avg     0.9201    0.9187    0.9186      3162
+
+
+Per-Class Metrics:
+Class Accuracies:
+Class 0: Accuracy = 0.9813
+Class 1: Accuracy = 0.9709
+Class 2: Accuracy = 0.9813
+Class 3: Accuracy = 0.9636
+Class 4: Accuracy = 0.9652
+Class 5: Accuracy = 0.9997
+Class 6: Accuracy = 0.9984
+Class 7: Accuracy = 0.9994
+Class 8: Accuracy = 0.9949
+Class 9: Accuracy = 0.9953
+Class 10: Accuracy = 0.9927
+Class 11: Accuracy = 0.9946
+
+Class Misclassification Rate:
+Class 0: Misclassification Rate = 0.0187
+Class 1: Misclassification Rate = 0.0291
+Class 2: Misclassification Rate = 0.0187
+Class 3: Misclassification Rate = 0.0364
+Class 4: Misclassification Rate = 0.0348
+Class 5: Misclassification Rate = 0.0003
+Class 6: Misclassification Rate = 0.0016
+Class 7: Misclassification Rate = 0.0006
+Class 8: Misclassification Rate = 0.0051
+Class 9: Misclassification Rate = 0.0047
+Class 10: Misclassification Rate = 0.0073
+Class 11: Misclassification Rate = 0.0054
