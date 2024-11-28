@@ -23,26 +23,26 @@ CONFIG_PATH = "config/"
 config = load_config(CONFIG_PATH, "config.yaml")
 print(config)
 # %%
-train_8 = pd.read_csv("../data/processed/train_8.csv")
-test_8 = pd.read_csv("../data/processed/test_8.csv")
+train = pd.read_csv("../data/processed/train.csv")
+test = pd.read_csv("../data/processed/test.csv")
 
-print(train_8.head())
-print(test_8.head())
+print(train.head())
+print(test.head())
 # %%
-X_train_8 = train_8.drop(["label"], axis=1)
-y_train_8 = train_8["label"]
-y_train_8 = y_train_8 - 1
-y_test_8 = test_8["label"] - 1
-X_test_8 = test_8.drop(["label"], axis=1)
+X_train = train.drop(["label"], axis=1)
+y_train = train["label"]
+y_train = y_train - 1
+y_test = test["label"] - 1
+X_test = test.drop(["label"], axis=1)
 # %%
 # Standardize the features
-scaler = StandardScaler()
-X_train_8 = scaler.fit_transform(X_train_8)
-X_test_8 = scaler.transform(X_test_8)
 # %%
 # Train the final models with the best hyperparameters
 smote = SMOTE(random_state=random_seed)
-X_train_smote_8, y_train_smote_8 = smote.fit_resample(X_train_8, y_train_8)
+X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
+scaler = StandardScaler()
+X_train_smote = scaler.fit_transform(X_train_smote)
+X_test = scaler.transform(X_test)
 xgb_tuned = XGBClassifier(
     n_estimators=config['n_estimators'],
     max_depth=config['max_depth'],
@@ -54,85 +54,160 @@ xgb_tuned = XGBClassifier(
     reg_lambda=config['reg_lambda'],
     random_state=random_seed
 )
-xgb_tuned.fit(X_train_smote_8, y_train_smote_8)
+xgb_tuned.fit(X_train_smote, y_train_smote)
 # %%
 # Highest misclassification rate for non-transition classes
 # Class 3: Misclassification Rate = 0.0417
 # Highest misclassification rate for transition classes
 # Class 10: Misclassification Rate = 0.0082
-res = misclass_analysis(y_test_8, X_test_8, 3, xgb_tuned)
-print(res)
-res = misclass_analysis(y_test_8, X_test_8, 10, xgb_tuned)
-print(res)
 # %%
-import matplotlib.pyplot as plt
-import numpy as np
 
-# Select indices to explain
-indices_to_explain = [17, 18]
+# Obtain predictions from the model
+predictions = xgb_tuned.predict(X_test)
 
-# Define feature names and class names based on your dataset
-feature_names = train_8.drop(["label"], axis=1).columns.tolist()
-class_names = list(range(len(np.unique(y_train_8))))  # Assuming classes are 0, 1, ..., n-1
+# Ensure y_test is a NumPy array if it's not already
+y_test_array = np.array(y_test)
 
-# Create a LIME explainer
-explainer = LimeTabularExplainer(
-    training_data=X_train_smote_8,
-    feature_names=feature_names,
-    class_names=class_names,
-    mode="classification"
-)
+# Indices where Class 4 is correctly classified
+indices_correct_class4 = np.where((y_test_array == 4) & (predictions == 4))[0][:5]
 
-# Dictionary to store explanations for each instance
-explanations = {}
+# Indices where Class 8 is correctly classified
+indices_correct_class8 = np.where((y_test_array == 8) & (predictions == 8))[0][:5]
 
-# Generate explanations for each index
-for idx in indices_to_explain:
-    # Reshape the instance for prediction
-    instance = X_test_8[idx].reshape(1, -1)
+# Print the indices
+print("Indices of correctly classified Class 4 instances:", indices_correct_class4)
+print("Indices of correctly classified Class 8 instances:", indices_correct_class8)# %%
+# %%
+res = misclass_analysis(y_test, X_test, 3, xgb_tuned)
+print(res)
+res = misclass_analysis(y_test, X_test, 10, xgb_tuned)
+print(res)
+# %
+y_pred = xgb_tuned.predict(X_test)
+print(classification_report(y_test, y_pred, digits=4))
+# %
+# %%
+def plot_lime_explanation(
+    a, b, A, B, X_train_smote, X_test, y_test, xgb_tuned,
+    feature_names, class_names, num_feat=6, random_seed=42,
+    font_size=14  # New parameter to control font size
+):
+    """
+    Generate a LIME explanation plot comparing feature importances between two instances:
+    - Instance 'a': correctly classified as class A
+    - Instance 'b': misclassified as class A (true class B)
     
-    # Generate the explanation
-    explanation = explainer.explain_instance(
-        data_row=instance.flatten(),
-        predict_fn=xgb_tuned.predict_proba
+    Parameters:
+    - a (int): Index of the instance correctly classified as Class A.
+    - b (int): Index of the instance misclassified as Class A (true Class B).
+    - A (int or str): Label of Class A.
+    - B (int or str): Label of Class B.
+    - X_train_smote (array-like): Training data used to fit the LIME explainer.
+    - X_test (array-like): Test data.
+    - y_test (array-like): True labels for the test data.
+    - xgb_tuned (model): Trained model with a predict_proba method.
+    - feature_names (list): List of feature names.
+    - class_names (list): List of class names.
+    - num_feat (int): Number of top features to plot (default is 6).
+    - random_seed (int): Random seed for reproducibility (default is 42).
+    - font_size (int): Font size for all text elements in the plot (default is 14).
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import random
+    from lime.lime_tabular import LimeTabularExplainer
+
+    # Set the random seed for reproducibility
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    # Create a LIME explainer with the random_state parameter
+    explainer = LimeTabularExplainer(
+        training_data=X_train_smote,
+        feature_names=feature_names,
+        class_names=class_names,
+        mode="classification",
+        random_state=random_seed
     )
-    
-    # Extract the feature contributions
-    explanations[idx] = dict(explanation.as_list())
 
-# Combine all features from both instances
-all_features = list(set().union(*[explanations[idx].keys() for idx in indices_to_explain]))
+    # Dictionary to store explanations for each instance
+    explanations = {}
 
-# Prepare data for plotting
-values_17 = [explanations[17].get(feature, 0) for feature in all_features]
-values_50 = [explanations[18].get(feature, 0) for feature in all_features]
+    indices_to_explain = [a, b]
 
-# Sort features by the sum of contributions for better visualization
-sorted_indices = np.argsort([abs(v17) + abs(v50) for v17, v50 in zip(values_17, values_50)])[::-1]
-sorted_features = [all_features[i] for i in sorted_indices]
-values_17 = [values_17[i] for i in sorted_indices]
-values_50 = [values_50[i] for i in sorted_indices]
+    # Generate explanations for each index
+    for idx in indices_to_explain:
+        # Reshape the instance for prediction
+        instance = X_test[idx].reshape(1, -1)
 
-# Plot the contributions with stacking
-plt.figure(figsize=(12, 8))
-positions = np.arange(len(sorted_features))
+        # Generate the explanation
+        explanation = explainer.explain_instance(
+            data_row=instance.flatten(),
+            predict_fn=xgb_tuned.predict_proba,
+            num_features=num_feat,
+            num_samples=1000,       # Fixed number of samples
+        )
 
-# Add the bars for each instance
-plt.barh(
-    positions, values_17, height=0.6, label="Instance 17", color="green", alpha=0.7, edgecolor="black"
-)
-plt.barh(
-    positions, values_50, height=0.6, label="Instance 50", color="red", alpha=0.7, edgecolor="black", left=values_17
-)
+        # Extract the feature contributions
+        explanations[idx] = dict(explanation.as_list())
 
-# Formatting
-plt.yticks(positions, sorted_features)
-plt.xlabel("Feature Importance")
-plt.title("LIME Explanation: Stacked Feature Contributions for Instance 17 and 50")
-plt.legend()
-plt.tight_layout()
+    # Combine all features from both instances
+    all_features = list(set().union(*[explanations[idx].keys() for idx in indices_to_explain]))
 
-# Save and show the plot
-plt.savefig("lime_feature_importance_stacked.png")
-plt.show()
+    # Prepare data for plotting
+    values_a = [explanations[a].get(feature, 0) for feature in all_features]
+    values_b = [explanations[b].get(feature, 0) for feature in all_features]
+
+    # Sort features by the sum of contributions for better visualization
+    sorted_indices = np.argsort([abs(va) + abs(vb) for va, vb in zip(values_a, values_b)])[::-1]
+    sorted_features = [all_features[i] for i in sorted_indices]
+    values_a = [values_a[i] for i in sorted_indices]
+    values_b = [values_b[i] for i in sorted_indices]
+
+    # Select the number of top features to plot
+    features_to_plot = sorted_features[:num_feat]
+    values_a_top = [explanations[a].get(feature, 0) for feature in features_to_plot]
+    values_b_top = [explanations[b].get(feature, 0) for feature in features_to_plot]
+
+    # Positions for the bars
+    positions = np.arange(len(features_to_plot))
+    bar_height = 0.35  # Adjust the bar height for better spacing
+
+    # Create the plot
+    plt.figure(figsize=(12, 6))
+
+    # Plot bars for Instance 'a'
+    plt.barh(
+        positions - bar_height / 2,
+        values_a_top,
+        height=bar_height,
+        color='green',
+        alpha=0.5,
+        label=f'Correctly Classified as Class {A} (Index {a})'
+    )
+
+    # Plot bars for Instance 'b'
+    plt.barh(
+        positions + bar_height / 2,
+        values_b_top,
+        height=bar_height,
+        color='red',
+        alpha=0.5,
+        label=f'Misclassified as Class {A} (Index {b}, True Class {B})'
+    )
+
+    # Increase font sizes
+    plt.yticks(positions, features_to_plot, fontsize=font_size)
+    plt.xlabel('Feature Contribution', fontsize=font_size + 2)
+    plt.ylabel('Features', fontsize=font_size + 2)
+    plt.title(f'LIME Explanation: Class {A} Correct vs Misclassified as Class {A}', fontsize=font_size + 4)
+    plt.legend(fontsize=font_size)
+    plt.xticks(fontsize=font_size)
+    plt.tight_layout()
+
+    # Save and show the plot
+    plt.savefig(f"lime_feature_importance_comparison_class_{A}_vs_{B}.png")
+    plt.show()
+# %%
+plot_lime_explanation(0, 17, 4, 3, X_train_smote, X_test, y_test, xgb_tuned, feature_names, class_names, num_feat=6, random_seed=random_seed, font_size=14)
 # %%
