@@ -67,7 +67,7 @@ def objective_xgb(config):
     )
     scalar = StandardScaler()
     pipeline = Pipeline([('transformer', scalar), ('estimator', model)])
-    scores = cross_val_score(pipeline, X_train_smote_8, y_train_smote_8, cv=10, scoring=make_scorer(f1_score, average='micro'))
+    scores = cross_val_score(pipeline, X_train_smote_8, y_train_smote_8, cv=10, scoring=make_scorer(f1_score, average='weighted'))
     session.report({'f1':scores.mean()})
 # %%
 # Run the hyperparameter search for XGBClassifier
@@ -77,10 +77,10 @@ analysis_xgb = tune.Tuner(
     metric="f1",
     mode="max",
     scheduler=ASHAScheduler(),
-    num_samples=50,
+    num_samples=100,
     ),
     param_space=param_dist_xgb,
-    run_config=RunConfig(storage_path=os.path.abspath("log"), name="xgb_trial_3", log_to_file=True)
+    run_config=RunConfig(storage_path=os.path.abspath("log"), name="xgb_trial_4", log_to_file=True)
 )
 
 # %%
@@ -93,7 +93,7 @@ best_config_xgb = best_result_xgb.config
 # %%
 print("Best hyperparameters for XGBClassifier: ", best_config_xgb)
 print("Best F1 score for XGBClassifier: ", best_result_xgb)
-xgb_df.to_csv("xgb_tune_results_3.csv", index=False)
+xgb_df.to_csv("xgb_tune_results_4.csv", index=False)
 # Shutdown Ray
 ray.shutdown()
 # %%
