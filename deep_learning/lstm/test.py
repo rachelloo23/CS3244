@@ -122,7 +122,8 @@ def eval_lstm(model, test_dataset, number_of_eval_sample, batch_size, num_classe
     y_pred = []
 
     for x_batch, y_batch in test_dataset.take(steps):
-        print(x_batch)
+        # print(x_batch)
+        print(len(y_batch))
         print(x_batch.shape)
         # Get model predictions
         y_pred_batch = model.predict(x_batch)
