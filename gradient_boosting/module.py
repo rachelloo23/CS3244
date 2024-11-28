@@ -66,8 +66,8 @@ def writeResults(model, X_train, y_train, X_test, y_test, filename):
     per_class_accuracies, per_class_misses = classAcc(cm)
 
     # Generate classification reports
-    report_train = classification_report(y_train, y_train_pred)
-    report_test = classification_report(y_test, y_test_pred)
+    report_train = classification_report(y_train, y_train_pred, digits=4)
+    report_test = classification_report(y_test, y_test_pred, digits=4)
 
     # Save confusion matrix, classification reports, and per-class metrics to a text file
     with open(filename, 'w') as f:
