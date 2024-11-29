@@ -16,6 +16,7 @@ def testing():
     lstm_units = config['lstm_units']
     dropout_rate = config['dropout_rate']
     batch_size = config['batch_size']
+    print(batch_size)
     learning_rate = config['learning_rate']
     # Prepare data catalog
     data_catalog_processor = DataCatalogProcessor(DATA_PATH, RAW_DATA_PATH)
