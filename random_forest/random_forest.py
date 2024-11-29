@@ -67,7 +67,7 @@ def objective_rf(config):
     )
     
     # Define stratified K-fold with standardization within each fold
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
     scores = []
     
     for train_index, val_index in skf.split(X_train_half, y_train_half):

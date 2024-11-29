@@ -41,10 +41,6 @@ y_train = train["label"] - 1  # Adjusting label for zero-indexing
 X_test = test.drop(["label"], axis=1)
 y_test = test["label"] - 1
 
-# Apply SMOTE to oversample the minority class
-smote = SMOTE(random_state=random_seed)
-X_train, y_train = smote.fit_resample(X_train, y_train)
-
 
 #### Adding feature selection
 def highCorrFeat(dataframe, threshold):
@@ -100,6 +96,10 @@ elif feature_threshold == 0.9:
 else:
     print("Invalid feature threshold. Please choose either 0.8 or 0.9.")
 
+# Apply SMOTE to oversample the minority class
+smote = SMOTE(random_state=random_seed)
+X_train, y_train = smote.fit_resample(X_train, y_train)
+
 
 # Define the search space for Random Forest hyperparameters
 param_dist_rf = {
@@ -124,7 +124,7 @@ def objective_rf(config):
     )
     
     # Define stratified K-fold with standardization within each fold
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
     scores = []
     
     for train_index, val_index in skf.split(X_train, y_train):
@@ -142,7 +142,7 @@ def objective_rf(config):
         
         # Evaluate the model on the validation fold
         val_pred = model.predict(X_val_fold)
-        f1 = f1_score(y_val_fold, val_pred, average='macro')
+        f1 = f1_score(y_val_fold, val_pred, average='weighted')
         scores.append(f1)
     
     # Report the average F1 score across all folds
