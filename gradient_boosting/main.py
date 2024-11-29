@@ -43,26 +43,17 @@ y_train = y_train - 1
 y_test = test["label"] - 1
 X_test = test.drop(["label"], axis=1)
 
-X_train_8 = train_8.drop(["label"], axis=1)
-y_train_8 = train_8["label"]
-y_train_8 = y_train_8 - 1
-y_test_8 = test_8["label"] - 1
-X_test_8 = test_8.drop(["label"], axis=1)
+# X_train_8 = train_8.drop(["label"], axis=1)
+# y_train_8 = train_8["label"]
+# y_train_8 = y_train_8 - 1
+# y_test_8 = test_8["label"] - 1
+# X_test_8 = test_8.drop(["label"], axis=1)
 
-X_train_9 = train_9.drop(["label"], axis=1)
-y_train_9 = train_9["label"]
-y_train_9 = y_train_9 - 1
-y_test_9 = test_9["label"] - 1
-X_test_9 = test_9.drop(["label"], axis=1)
-# # %%
-# # Standardize the features
-# # scaler = StandardScaler()
-# # X_train = scaler.fit_transform(X_train)
-# # X_test = scaler.transform(X_test)
-# # X_train_8 = scaler.fit_transform(X_train_8)
-# # X_test_8 = scaler.transform(X_test_8)
-# # X_train_9 = scaler.fit_transform(X_train_9)
-# # X_test_9 = scaler.transform(X_test_9)
+# X_train_9 = train_9.drop(["label"], axis=1)
+# y_train_9 = train_9["label"]
+# y_train_9 = y_train_9 - 1
+# y_test_9 = test_9["label"] - 1
+# X_test_9 = test_9.drop(["label"], axis=1)
 # # %%
 # # 1. Default params on original data
 # # 2. Default params on feature selected data
@@ -173,5 +164,5 @@ xgb_tuned.fit(X_train_smote, y_train_smote)
 filename = "./results/tuned_Smote.txt"
 writeResults(xgb_tuned, X_train_smote, y_train_smote, X_test, y_test, filename)
 # %%
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

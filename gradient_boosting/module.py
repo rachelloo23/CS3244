@@ -21,17 +21,18 @@ def classAcc(confusion_matrix):
     if confusion_matrix.shape[0] != confusion_matrix.shape[1]:
         raise ValueError("Confusion matrix must be square.")
 
-    total_samples = np.sum(confusion_matrix)
     per_class_accuracies = {}
     per_class_misses = {}
 
     for idx in range(confusion_matrix.shape[0]):
         tp = confusion_matrix[idx, idx]
-        fn = np.sum(confusion_matrix[idx, :]) - tp
-        fp = np.sum(confusion_matrix[:, idx]) - tp
-        tn = total_samples - (tp + fn + fp)
+        total = np.sum(confusion_matrix[idx, :])  # Total samples of class idx
 
-        accuracy = (tp + tn) / total_samples
+        if total == 0:
+            accuracy = 0
+        else:
+            accuracy = tp / total
+
         per_class_accuracies[idx] = accuracy
         per_class_misses[idx] = 1 - accuracy
 
