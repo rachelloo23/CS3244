@@ -91,8 +91,9 @@ random_search.fit(X_train, y_train)
 print("Best hyperparameters found: ", random_search.best_params_)
 # Predict using the best model
 y_pred = random_search.best_estimator_.predict(X_test)
-
+# %%
 from sklearn.metrics import classification_report
+print(classification_report(y_train,random_search.best_estimator_.predict(X_train),digits = 5))
 print(classification_report(y_test, y_pred, digits = 5))
 # %%
 # Results

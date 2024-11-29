@@ -67,6 +67,7 @@ print("Average F1 Score (with SMOTE and Standardization):", np.mean(scores))
 # Fit the pipeline on the training data and evaluate on the test set
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
+print(classification_report(y_train,pipeline.predict(X_train) , digits=5))
 print(classification_report(y_test, y_pred, digits=5))
 # precision    recall  f1-score   support
 
