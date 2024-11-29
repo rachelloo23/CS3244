@@ -80,7 +80,7 @@ print("Indices of correctly classified Class 8 instances:", indices_correct_clas
 # %%
 res = misclass_analysis(y_test, X_test, 3, xgb_tuned)
 print(res)
-res = misclass_analysis(y_test, X_test, 10, xgb_tuned)
+res = misclass_analysis(y_test, X_test, 9, xgb_tuned)
 print(res)
 # %
 y_pred = xgb_tuned.predict(X_test)
