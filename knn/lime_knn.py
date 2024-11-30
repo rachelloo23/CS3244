@@ -1,7 +1,6 @@
 # %%
 import csv
 import math
-import random
 import numpy as np
 import pandas as pd
 from sklearn import neighbors
@@ -74,11 +73,6 @@ features = X_train.columns.tolist()
 #%%
 # Need run this
 
-import numpy as np
-import pandas as pd
-from sklearn.neighbors import KNeighborsClassifier
-from lime.lime_tabular import LimeTabularExplainer
-
 # Define the wrapper to add predict_proba functionality
 class ProbabilisticWrapper:
     def __init__(self, model):
@@ -109,26 +103,7 @@ explainer = LimeTabularExplainer(
 )
 #%%
 
-# # Top Features Contributing to the Prediction
-# explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=10)
-# feature_weights = explanation.as_list()
-
-# # Extract feature names and corresponding weights
-# feature_names = features
-# feature_values = [feature[1] for feature in feature_weights]
-
-# # Create the bar plot
-# plt.figure(figsize=(10, 6))
-# plt.barh(feature_names, feature_values, color='skyblue')
-# plt.xlabel('Weight (Influence on Prediction)')
-# plt.title('Top Features Contributing to the Prediction')
-# plt.show()
-
-# This explains for a single test instance
-
-#%%
-
-# Running now (to get correct and misclassified tgt)
+# LIME explanations for Class Label 3
 misclassified_df = pd.read_csv("./knn_misclassifications.csv")
 
 correct_classifications = pd.read_csv("./knn_correct_classifications.csv")
@@ -184,75 +159,6 @@ plt.legend()
 plt.show()
 
 
-#%%
-
-
-# For misclassification table/rates
-
-# Calculate total misclassifications
-total_misclassifications = len(misclassified_df)
-
-# Calculate misclassification counts for each True Label
-misclassification_counts = misclassified_df['True Label'].value_counts()
-
-# Calculate the misclassification rate for each class
-misclassification_rates = (misclassification_counts / total_misclassifications).reset_index()
-misclassification_rates.columns = ['True Label', 'Misclassification Rate']
-
-# Group by (True Label, Predicted Label) and count occurrences
-misclassification_matrix = (
-    misclassified_df.groupby(['True Label', 'Predicted Label'])
-    .size()
-    .reset_index(name='Frequency')
-)
-
-# Merge misclassification rates with the matrix
-final_table = pd.merge(
-    misclassification_matrix, 
-    misclassification_rates, 
-    on='True Label'
-)
-
-# Sort the final table by Misclassification Rate (descending) and then by Frequency (optional)
-sorted_by_rate = final_table.sort_values(by=['Misclassification Rate', 'Frequency'], ascending=[False, False])
-
-# Display the final sorted table
-print(sorted_by_rate)
-
-# Optional: Save the final table to a CSV
-# sorted_by_rate.to_csv("misclassification_sorted_by_rate.csv", index=False)
-#%%
-#%%
-# Process misclassified instances
-misclassified_df = pd.read_csv("./knn_misclassifications.csv")  # Load misclassified indices
-misclassified_indices = misclassified_df['Index'].values
-
-# Loop through misclassified instances and generate explanations
-all_explanations = []
-for idx in misclassified_indices:
-    test_instance = X_test_np[idx]  # Extract the misclassified instance
-    explanation = explainer.explain_instance(
-        test_instance,
-        knn_wrapper.predict_proba,
-        num_features=7,
-        top_labels=3
-    )
-    all_explanations.append(explanation)
-
-    # Visualize explanation for the instance
-    # explanation.show_in_notebook()
-#%%
-# Optional: Aggregate feature importance for all misclassified instances
-feature_importances = {}
-for explanation in all_explanations:
-    # Iterate over each of the top labels
-    for label in explanation.top_labels:
-        for feature, weight in explanation.as_list(label=label):
-            feature_importances[feature] = feature_importances.get(feature, 0) + abs(weight)
-
-# Sort features by overall importance
-sorted_feature_importances = sorted(feature_importances.items(), key=lambda x: x[1], reverse=True)
-print(sorted_feature_importances)
 #%%
 
 # for correct classifications
