@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn import neighbors
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split, KFold
 from sklearn.neighbors import KNeighborsClassifier
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.preprocessing import StandardScaler
@@ -15,8 +15,6 @@ from sklearn.preprocessing import StandardScaler
 
 random_seed = 31
 
-# First part: compare with feature selection and without
-# Second part: oversample vs without
 # %%
 # Reading in data
 train = pd.read_csv("../data/processed/train.csv")
@@ -28,11 +26,14 @@ X_test = test.iloc[:, :-2]
 y_test = test[['label']] - 1 
 #%%
 # Baseline model (default parameters, no fs, no oversampling)
-knn = neighbors.KNeighborsClassifier(n_neighbors = 5, metric='minkowski') # default k = 5, dist = minkowski
+knn = neighbors.KNeighborsClassifier(n_neighbors = 5, metric='minkowski', p=2) # default k = 5, dist = minkowski
 knn_model = knn.fit(X_train, y_train) 
 
-print(f1_score(y_train, knn_model.predict(X_train) , average='micro')) # 0.9760525299343376
-print(f1_score(y_test, knn_model.predict(X_test), average='micro'))  # 0.8848829854522454
+print(f1_score(y_train, knn_model.predict(X_train) , average='weighted')) # 0.975782440942216
+print(f1_score(y_test, knn_model.predict(X_test), average='weighted'))  # 0.8827831477295671
+print(f1_score(y_train, knn_model.predict(X_train) , average='macro')) # 0.9109836775301784
+print(f1_score(y_test, knn_model.predict(X_test), average='macro'))  # 0.8135337752124174
+
 print(classification_report(y_test, knn_model.predict(X_test)))
 #               precision    recall  f1-score   support
 
@@ -122,8 +123,11 @@ y_test_8 = test_8[['label']]
 knn = neighbors.KNeighborsClassifier(n_neighbors = 5, metric='minkowski')
 knn_model = knn.fit(X_train_8, y_train_8) 
 
-print(f1_score(y_train_8, knn_model.predict(X_train_8) , average='micro')) # 0.9669112913608858
-print(f1_score(y_test_8, knn_model.predict(X_test_8), average='micro'))  # 0.8500948766603416
+print(f1_score(y_train_8, knn_model.predict(X_train_8) , average='weighted')) # 0.9666702857272359
+print(f1_score(y_test_8, knn_model.predict(X_test_8), average='weighted'))  # 0.8484672390717394
+print(f1_score(y_train_8, knn_model.predict(X_train_8) , average='macro')) # 0.9024469531032707
+print(f1_score(y_test_8, knn_model.predict(X_test_8), average='macro'))  # 0.771609290370255
+
 
 #%%
 X_train_9 = train_9.drop('label', axis=1)
@@ -157,8 +161,11 @@ X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
 knn = neighbors.KNeighborsClassifier(n_neighbors = 5, metric='minkowski')
 knn_model = knn.fit(X_train_smote, y_train_smote) 
 
-print(f1_score(y_train_smote, knn_model.predict(X_train_smote) , average='micro'))  # 0.9906886858749122
-print(f1_score(y_test, knn_model.predict(X_test), average='micro'))  # 0.8877292852624921
+print(f1_score(y_train_smote, knn_model.predict(X_train_smote) , average='weighted'))  # 0.9906625022317752
+print(f1_score(y_test, knn_model.predict(X_test), average='weighted'))  # 0.8875149031340788
+print(f1_score(y_train_smote, knn_model.predict(X_train_smote) , average='macro'))  # 0.9906625022317751
+print(f1_score(y_test, knn_model.predict(X_test), average='macro'))  # 0.8013433442830328
+
 #%%
 
 # Baseline Model (default params, with feature selection (0.8), with oversampling)
@@ -170,13 +177,15 @@ X_train_smote_8, y_train_smote_8 = smote.fit_resample(X_train_8, y_train_8)
 knn = neighbors.KNeighborsClassifier(n_neighbors = 5, metric='minkowski')
 knn_model = knn.fit(X_train_smote_8, y_train_smote_8) 
 
-print(f1_score(y_train_smote_8, knn_model.predict(X_train_smote_8) , average='micro'))  # 0.9851838838135395
-print(f1_score(y_test_8, knn_model.predict(X_test_8), average='micro'))  # 0.8459835547122074
+print(f1_score(y_train_smote_8, knn_model.predict(X_train_smote_8) , average='weighted'))  # 0.9851294673969593
+print(f1_score(y_test_8, knn_model.predict(X_test_8), average='weighted'))  # 0.8475332153606772
+print(f1_score(y_train_smote_8, knn_model.predict(X_train_smote_8) , average='macro'))  # 0.9851294673969594
+print(f1_score(y_test_8, knn_model.predict(X_test_8), average='macro'))  # 0.7672577042126535
 
 
 #%%
 
-# Tuning baseline model (find best k, euclidean)
+# Tuning oversampled model (find best k, euclidean)
 kfold = KFold(n_splits=10, shuffle=True, random_state=random_seed)
 
 # Range of k values to evaluate
@@ -193,9 +202,9 @@ for k in k_range:
     fold_test_scores = []
     
     # Perform K-Fold cross-validation
-    for train_index, test_index in kfold.split(X_train, y_train):
-        X_train_fold, X_test_fold = X_train.iloc[train_index], X_train.iloc[test_index]
-        y_train_fold, y_test_fold = y_train.iloc[train_index], y_train.iloc[test_index]
+    for train_index, test_index in kfold.split(X_train_smote, y_train_smote):
+        X_train_fold, X_test_fold = X_train_smote.iloc[train_index], X_train_smote.iloc[test_index]
+        y_train_fold, y_test_fold = y_train_smote.iloc[train_index], y_train_smote.iloc[test_index]
         
         # Standardize the data for each fold
         scaler = StandardScaler()
@@ -233,32 +242,31 @@ print("Results DataFrame:\n", results_df)
 # Best k: 1
 # Results DataFrame:
 #       k  Training F1 Score  Test F1 Score
-# 0    1           1.000000       0.956868
-# 1    2           0.975709       0.936397
-# 2    3           0.984407       0.951849
-# 3    4           0.973506       0.946954
-# 4    5           0.971761       0.948886
-# 5    6           0.968428       0.945667
-# 6    7           0.967283       0.946696
-# 7    8           0.964436       0.945280
-# 8    9           0.962176       0.945280
-# 9   10           0.960345       0.943864
-# 10  11           0.958600       0.944379
-# 11  12           0.957927       0.944637
-# 12  13           0.955124       0.940259
-# 13  14           0.955281       0.941675
-# 14  15           0.951876       0.940517
-# 15  16           0.952677       0.940645
-# 16  17           0.949258       0.938200
-# 17  18           0.949816       0.938586
-# 18  19           0.947127       0.937942
-# 19  20           0.948257       0.938585
+# 0    1           1.000000       0.983896
+# 1    2           0.990721       0.974818
+# 2    3           0.993753       0.981143
+# 3    4           0.988040       0.977161
+# 4    5           0.989674       0.980675
+# 5    6           0.986388       0.977571
+# 6    7           0.987585       0.979679
+# 7    8           0.984917       0.978039
+# 8    9           0.986433       0.979855
+# 9   10           0.984520       0.978625
+# 10  11           0.985314       0.980382
+# 11  12           0.983948       0.978859
+# 12  13           0.984618       0.979269
+# 13  14           0.983466       0.978859
+# 14  15           0.983948       0.978976
+# 15  16           0.982861       0.978391
+# 16  17           0.982991       0.978157
+# 17  18           0.982132       0.977688
+# 18  19           0.981969       0.977747
+# 19  20           0.981345       0.977922
 
-
-# Choose k = 10 to balance training and test score
+# Choose k = 11 to balance training and test score (for euclidean)
 #%%
 
-# Tuning baseline model (find best k, minkowski)
+# Tuning oversampled model (find best k, minkowski)
 kfold = KFold(n_splits=10, shuffle=True, random_state=random_seed)
 
 # Range of k values to evaluate
@@ -275,9 +283,9 @@ for k in k_range:
     fold_test_scores = []
     
     # Perform K-Fold cross-validation
-    for train_index, test_index in kfold.split(X_train, y_train):
-        X_train_fold, X_test_fold = X_train.iloc[train_index], X_train.iloc[test_index]
-        y_train_fold, y_test_fold = y_train.iloc[train_index], y_train.iloc[test_index]
+    for train_index, test_index in kfold.split(X_train_smote, y_train_smote):
+        X_train_fold, X_test_fold = X_train_smote.iloc[train_index], X_train_smote.iloc[test_index]
+        y_train_fold, y_test_fold = y_train_smote.iloc[train_index], y_train_smote.iloc[test_index]
         
         # Standardize the data for each fold
         scaler = StandardScaler()
@@ -316,28 +324,32 @@ print("Results DataFrame:\n", results_df)
 # Best k: 1
 # Results DataFrame:
 #       k  Training F1 Score  Test F1 Score
-# 0    1           1.000000       0.956868
-# 1    2           0.975709       0.936397
-# 2    3           0.984407       0.951849
-# 3    4           0.973506       0.946954
-# 4    5           0.971761       0.948886
-# 5    6           0.968428       0.945667
-# 6    7           0.967283       0.946696
-# 7    8           0.964436       0.945280
-# 8    9           0.962176       0.945280
-# 9   10           0.960345       0.943864
-# 10  11           0.958600       0.944379
-# 11  12           0.957927       0.944637
-# 12  13           0.955124       0.940259
-# 13  14           0.955281       0.941675
-# 14  15           0.951876       0.940517
-# 15  16           0.952677       0.940645
-# 16  17           0.949258       0.938200
-# 17  18           0.949816       0.938586
-# 18  19           0.947127       0.937942
-# 19  20           0.948257       0.938585
+# 0    1           1.000000       0.983896
+# 1    2           0.990721       0.974818
+# 2    3           0.993753       0.981143
+# 3    4           0.988040       0.977161
+# 4    5           0.989674       0.980675
+# 5    6           0.986388       0.977571
+# 6    7           0.987585       0.979679
+# 7    8           0.984917       0.978039
+# 8    9           0.986433       0.979855
+# 9   10           0.984520       0.978625
+# 10  11           0.985314       0.980382
+# 11  12           0.983948       0.978859
+# 12  13           0.984618       0.979269
+# 13  14           0.983466       0.978859
+# 14  15           0.983948       0.978976
+# 15  16           0.982861       0.978391
+# 16  17           0.982991       0.978157
+# 17  18           0.982132       0.977688
+# 18  19           0.981969       0.977747
+# 19  20           0.981345       0.977922
+
+
+# Choose k = 11 to balance training and test score (same as euclidean)
+
 #%%
-# Tuning baseline model (find best k, manhattan)
+# Tuning oversampled model (find best k, manhattan)
 kfold = KFold(n_splits=10, shuffle=True, random_state=random_seed)
 
 # Range of k values to evaluate
@@ -354,9 +366,9 @@ for k in k_range:
     fold_test_scores = []
     
     # Perform K-Fold cross-validation
-    for train_index, test_index in kfold.split(X_train, y_train):
-        X_train_fold, X_test_fold = X_train.iloc[train_index], X_train.iloc[test_index]
-        y_train_fold, y_test_fold = y_train.iloc[train_index], y_train.iloc[test_index]
+    for train_index, test_index in kfold.split(X_train_smote, y_train_smote):
+        X_train_fold, X_test_fold = X_train_smote.iloc[train_index], X_train_smote.iloc[test_index]
+        y_train_fold, y_test_fold = y_train_smote.iloc[train_index], y_train_smote.iloc[test_index]
         
         # Standardize the data for each fold
         scaler = StandardScaler()
@@ -394,34 +406,34 @@ print("Results DataFrame:\n", results_df)
 # Best k: 1
 # Results DataFrame:
 #       k  Training F1 Score  Test F1 Score
-# 0    1           1.000000       0.972704
-# 1    2           0.985222       0.958540
-# 2    3           0.988441       0.966782
-# 3    4           0.982891       0.963564
-# 4    5           0.981932       0.961376
-# 5    6           0.979014       0.961503
-# 6    7           0.976281       0.959186
-# 7    8           0.973635       0.958671
-# 8    9           0.971246       0.956482
-# 9   10           0.971031       0.958542
-# 10  11           0.968099       0.955323
-# 11  12           0.967999       0.956224
-# 12  13           0.965023       0.953520
-# 13  14           0.965438       0.953906
-# 14  15           0.962963       0.950816
-# 15  16           0.963521       0.950044
-# 16  17           0.960889       0.951075
-# 17  18           0.961718       0.951847
-# 18  19           0.958929       0.947985
-# 19  20           0.959744       0.949272
+# 0    1           1.000000       0.993207
+# 1    2           0.995784       0.986296
+# 2    3           0.997313       0.990337
+# 3    4           0.994079       0.987116
+# 4    5           0.994645       0.989342
+# 5    6           0.992738       0.988288
+# 6    7           0.992621       0.988171
+# 7    8           0.991463       0.987527
+# 8    9           0.991509       0.987819
+# 9   10           0.990565       0.987000
+# 10  11           0.990396       0.986941
+# 11  12           0.989661       0.986121
+# 12  13           0.989999       0.987000
+# 13  14           0.989511       0.986297
+# 14  15           0.989680       0.986999
+# 15  16           0.988925       0.986414
+# 16  17           0.989212       0.986531
+# 17  18           0.988600       0.986121
+# 18  19           0.988769       0.985886
+# 19  20           0.988450       0.986062
 #%%
 
-# Therefore, best parameters: manhattan, k = 10?
+# Therefore, best parameters: manhattan, k = 10(?)
 
 #%%
-# Identify misclassified instances (from tuned baseline model)
+# Identify misclassified instances (from tuned oversampled model)
 knn = KNeighborsClassifier(n_neighbors=10, metric='manhattan')
-knn.fit(X_train, y_train.squeeze())  # .squeeze() to pass as Series
+knn.fit(X_train_smote, y_train_smote.squeeze())  # .squeeze() to pass as Series
 
 # Make predictions
 y_pred = knn.predict(X_test)
@@ -440,22 +452,24 @@ misclassified_df = pd.DataFrame({
 
 # print("Misclassified Instances:\n", misclassified_df)
 print("Total Misclassified Instances:", len(misclassified_df))
-misclassified_df.to_csv('knn_misclassifications.csv', index=False)
+# misclassified_df.to_csv('knn_misclassifications.csv', index=False)
 
-
-# Misclassified Instances:
-#       Index  True Label  Predicted Label
-# 0       16           6                1
-# 1       17           3                4
-# 2       20           3                4
-# 3       21           3                4
-# 4       24           3                4
+#      Index  True Label  Predicted Label
+# 0       17           3                4
+# 1       20           3                4
+# 2       28           3                4
+# 3       49          10                8
+# 4       50          10                8
 # ..     ...         ...              ...
-# 302   3001           4                3
-# 303   3110           2                0
-# 304   3113           2                0
-# 305   3130           2                0
-# 306   3161           1                0
+# 307   3007           4                3
+# 308   3010           4                3
+# 309   3113           2                0
+# 310   3130           2                0
+# 311   3161           1                0
 
-# [307 rows x 3 columns]
-# Total Misclassified Instances: 307
+# [312 rows x 3 columns]
+
+
+# Total Misclassified Instances: 312
+
+
