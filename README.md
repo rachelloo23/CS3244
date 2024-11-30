@@ -47,6 +47,7 @@ This repository explores two distinct approaches to human activity recognition u
 ├── README.md                                   # Project description and usage guide
 ├── .gitignore                                  # Files and directories to be ignored by Git
 └── requirements.txt                            # Python dependencies
+
 ```
 ## Prerequisites
 Before setting up the project, make sure you have the following installed:
