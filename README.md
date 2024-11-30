@@ -4,7 +4,7 @@ This repository contains implementations of various machine learning models for 
 
 - [Directory Structure](#directory-structure)
 - [Prerequisites](#prerequisites)
-- [Setup Instructions](#setup-instructions)]
+- [Setup Instructions](#setup-instructions)
 - [Models](#models)
 - [Data Preprocessing](#data-preprocessing)
 - [Configuration](#configuration)
@@ -16,37 +16,51 @@ This repository contains implementations of various machine learning models for 
 │   ├── activity_labels.txt
 │   ├── features.txt
 |   └── features_info.txt
+│   ├── processed/
+    │   ├── train_8.csv                         # Train set of selected features based on threshold > 0.8
+    │   ├── train_9.csv                         # Train set of selected features based on threshold > 0.9
+    │   ├── test_8.csv                          # Test set of selected features based on threshold > 0.8
+    │   ├── test_9.csv                          # Test set of selected features based on threshold > 0.9
+├── feature_engineering/
+│   ├── main.py                                 # Main code file for feature engineering
+│   ├── high_corr_features_8.csv                # Highly correlated features of threshold > 0.8                 
+│   ├── high_corr_features_9.csv                # Highly correlated features of threshold > 0.8                   
 ├── models/
-│   ├── knn/                  # k-Nearest Neighbors implementation
+│   ├── knn/                                    # k-Nearest Neighbors implementation
 │   │   ├── knn.py
-│   │   └── results/          # Results and logs for kNN
-│   ├── decision_tree/        # Decision Tree implementation
+│   │   └── results/                            # Results and logs for kNN
+│   ├── decision_tree/                          # Decision Tree implementation
 │   │   ├── decision_tree.py
-│   │   └── results/          # Results and logs for Decision Tree
-│   ├── random_forest/        # Random Forest implementation
+│   │   └── results/                            # Results and logs for Decision Tree
+│   ├── random_forest/                          # Random Forest implementation
 │   │   ├── random_forest.py
-│   │   └── results/          # Results and logs for Random Forest
-│   ├── gradient_boosting/    # Gradient Boosting implementation
-│   │   ├── gradient_boosting.py
-│   │   └── results/          # Results and logs for Gradient Boosting
-│   ├── deep_learning/
-│   │   ├── cnn/              # Convolutional Neural Network (CNN) implementation
+│   │   └── results/                            # Results and logs for Random Forest
+│   ├── gradient_boosting/                      # Gradient Boosting implementation
+│   │   ├── config/           
+    │   │   ├── config.yaml                     # Optimal hyperparameters of the model at different stages
+│   │   ├── main.py                             # Main code file to run the result
+│   │   ├── tune.py                             # Tune the model
+│   │   └── results/                            # Results and logs for Gradient Boosting
+    │   │   ├── xgb_tune_results.csv            # Results of tuning pre-standardising
+    │   │   ├── xgb_tune_results_2.csv          # Results of tuning post-standardising
+  ├── deep_learning/
+│   │   ├── cnn/                                # Convolutional Neural Network (CNN) implementation
 │   │   │   ├── cnn.py
-│   │   │   └── results/      # Results and logs for CNN
-│   │   ├── lstm/             # Long Short-Term Memory (LSTM) implementation
+│   │   │   └── results/                        # Results and logs for CNN
+│   │   ├── lstm/                               # Long Short-Term Memory (LSTM) implementation
 │   │   │   ├── lstm.py
-│   │   │   └── results/      # Results and logs for LSTM
-│   │   ├── autoencoder/      # Autoencoder implementation
+│   │   │   └── results/                        # Results and logs for LSTM
+│   │   ├── autoencoder/                        # Autoencoder implementation
 │   │   │   ├── autoencoder.py
-│   │   │   └── results/      # Results and logs for Autoencoder
-├── notebooks/                # Jupyter notebooks for experimentation
-├── scripts/                  # Utility scripts for preprocessing, evaluation
-│   ├── preprocess.py         # Script for data preprocessing
-│   ├── evaluation.py         # Script for evaluation metrics
-├── README.md                 # This file
+│   │   │   └── results/                        # Results and logs for Autoencoder
+├── notebooks/                                  # Jupyter notebooks for experimentation
+├── scripts/                                    # Utility scripts for preprocessing, evaluation
+│   ├── preprocess.py                           # Script for data preprocessing
+│   ├── evaluation.py                           # Script for evaluation metrics
+├── README.md                                   # This file
 ├── .gitignore
 ├── requirements.txt          
-└── config.yaml               # Configuration file for hyperparameters
+└── config.yaml                                 # Configuration file for hyperparameters
 ```
 ## Prerequisites
 Before setting up the project, make sure you have the following installed:
