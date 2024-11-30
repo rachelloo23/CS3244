@@ -1,7 +1,6 @@
 # %%
 import csv
 import math
-import random
 import numpy as np
 import pandas as pd
 from sklearn import neighbors
@@ -68,17 +67,33 @@ disp.plot(cmap='Blues', values_format='d')
 plt.title("Confusion Matrix")
 plt.show()
 #%%
-# Error rates for each label
-# 0: 19.9%
-# 1: 19.6%
-# 2: 6.73%
-# 3: 16.98%
-# 4: 16.98%
-# 5: 16.03%
-# 6: 4.49%
-# 7: 1.92%
-# 8: 6.41%
-# 9: 3.21%
-# 10: 3.21%
-# 11: 1.28%
+# Misclassification rates for each label
 
+# Generate the confusion matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print(conf_matrix)
+# Normalize the confusion matrix row-wise
+normalized_conf_matrix = conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis]
+
+# Find the most misclassified classes
+misclassified_rates = pd.DataFrame({
+    "True Class": range(1, len(conf_matrix) + 1),
+    "Misclassified Rate": [1 - normalized_conf_matrix[i, i] for i in range(len(conf_matrix))]
+}).sort_values(by="Misclassified Rate", ascending=False)
+
+print("Most Misclassified Classes:")
+print(misclassified_rates)
+# Most Misclassified Classes:
+#     True Class  Misclassified Rate
+# 10          11            0.489796
+# 11          12            0.481481
+# 2            3            0.204762
+# 9           10            0.200000
+# 6            7            0.173913
+# 8            9            0.156250
+# 3            4            0.110236
+# 4            5            0.102518
+# 1            2            0.099788
+# 0            1            0.024194
+# 5            6            0.005505
+# 7            8            0.000000
