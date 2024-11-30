@@ -38,40 +38,41 @@ knn_model = knn.fit(X_train_smote, y_train_smote)
 
 
 #%%
-# LIME
+# For LIME to work
 
 X_train_np = X_train.to_numpy()
 X_test_np = X_test.to_numpy()
+features = X_train.columns.tolist()
 #%%
 # on tuned oversampled model
 # For single instance/index
-idx = 17
+# idx = 17
 
-explainer = LimeTabularExplainer(
-    X_train_np,  # Use the NumPy array
-    mode="classification",
-    feature_names=[f"Feature {i}" for i in range(X_train.shape[1])],
-    class_names=np.unique(y_train).astype(str),
-    discretize_continuous=True
-)
+# explainer = LimeTabularExplainer(
+#     X_train_np,  # Use the NumPy array
+#     mode="classification",
+#     feature_names=features,
+#     class_names=np.unique(y_train).astype(str),
+#     discretize_continuous=True
+# )
 
-# Convert the test instance to a 1D numpy array (this ensures it's in the correct format for LIME)
-test_instance = X_test_np[idx] 
+# # Convert the test instance to a 1D numpy array (this ensures it's in the correct format for LIME)
+# test_instance = X_test_np[idx] 
 
-# Generate an explanation for the test instance
-explanation = explainer.explain_instance(
-    test_instance,
-    knn_model.predict_proba,  # Use predict_proba to get class probabilities
-    num_features=10,
-    top_labels=2
-)
+# # Generate an explanation for the test instance
+# explanation = explainer.explain_instance(
+#     test_instance,
+#     knn_model.predict_proba,  # Use predict_proba to get class probabilities
+#     num_features=10,
+#     top_labels=2
+# )
 
 
-# Visualize the explanation
-explanation.show_in_notebook()
+# # Visualize the explanation
+# explanation.show_in_notebook()
 
 #%%
-# viz
+# Need run this
 
 import numpy as np
 import pandas as pd
@@ -102,11 +103,126 @@ knn_wrapper = ProbabilisticWrapper(knn_model)
 explainer = LimeTabularExplainer(
     X_train_np,
     mode="classification",
-    feature_names=[f"Feature {i}" for i in range(X_train_np.shape[1])],
+    feature_names=features,
     class_names=[f"Class {i}" for i in range(12)],
     discretize_continuous=True
 )
+#%%
 
+# # Top Features Contributing to the Prediction
+# explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=10)
+# feature_weights = explanation.as_list()
+
+# # Extract feature names and corresponding weights
+# feature_names = features
+# feature_values = [feature[1] for feature in feature_weights]
+
+# # Create the bar plot
+# plt.figure(figsize=(10, 6))
+# plt.barh(feature_names, feature_values, color='skyblue')
+# plt.xlabel('Weight (Influence on Prediction)')
+# plt.title('Top Features Contributing to the Prediction')
+# plt.show()
+
+# This explains for a single test instance
+
+#%%
+
+# Running now (to get correct and misclassified tgt)
+misclassified_df = pd.read_csv("./knn_misclassifications.csv")
+
+correct_classifications = pd.read_csv("./knn_correct_classifications.csv")
+correct_classifications['True Label'] = correct_classifications['True Label'] - 1
+correct_classifications['Predicted Label'] = correct_classifications['Predicted Label'] - 1
+
+
+# Filter correctly classified class 3
+correct_class3_indices = correct_classifications[(correct_classifications['True Label'] == 3) & (correct_classifications['Predicted Label'] == 3)]['Index'].values
+
+# Filter misclassified: True class 3, Predicted class 4
+misclassified_class3_as4_indices = misclassified_df[
+    (misclassified_df['True Label'] == 3) & (misclassified_df['Predicted Label'] == 4)
+]['Index'].values
+
+# Assuming `feature_names` is a list of actual feature names corresponding to the columns in X_train
+feature_names = X_train.columns.tolist()  # Adjust as needed for your data source
+
+# Generate explanations for correctly classified class 3
+correct_feature_importances = {}
+for idx in correct_class3_indices:
+    test_instance = X_test_np[idx]
+    explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=7)
+    for feature, weight in explanation.as_list():
+        # Use signed weights instead of absolute weights
+        correct_feature_importances[feature] = correct_feature_importances.get(feature, 0) + weight
+
+# Generate explanations for misclassified class 3 -> class 4
+misclassified_feature_importances = {}
+for idx in misclassified_class3_as4_indices:
+    test_instance = X_test_np[idx]
+    explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=7)
+    for feature, weight in explanation.as_list():
+        # Use signed weights instead of absolute weights
+        misclassified_feature_importances[feature] = misclassified_feature_importances.get(feature, 0) + weight
+#%%
+
+# Visualization
+
+# Convert to sorted lists
+correct_features, correct_weights = zip(*sorted(correct_feature_importances.items(), key=lambda x: abs(x[1]), reverse=True))
+misclassified_features, misclassified_weights = zip(*sorted(misclassified_feature_importances.items(), key=lambda x: abs(x[1]), reverse=True))
+
+# Plot comparison
+num_feat = 6  # Adjust as needed
+plt.figure(figsize=(12, 6))
+plt.barh(correct_features[:num_feat], correct_weights[:num_feat], color='green', alpha=0.5, label='Correctly Classified Class 3')
+plt.barh(misclassified_features[:num_feat], misclassified_weights[:num_feat], color='red', alpha=0.3, label='Misclassified as Class 4')
+plt.axvline(0, color='gray', linestyle='--', linewidth=0.8)  # Add a line at 0 for reference
+plt.xlabel('Feature Weight')
+plt.title('Feature Importance Comparison (Actual Label: 3): Correctly Classified as Class 3 vs Misclassified as Class 4')
+plt.legend()
+plt.show()
+
+
+#%%
+
+
+# For misclassification table/rates
+
+# Calculate total misclassifications
+total_misclassifications = len(misclassified_df)
+
+# Calculate misclassification counts for each True Label
+misclassification_counts = misclassified_df['True Label'].value_counts()
+
+# Calculate the misclassification rate for each class
+misclassification_rates = (misclassification_counts / total_misclassifications).reset_index()
+misclassification_rates.columns = ['True Label', 'Misclassification Rate']
+
+# Group by (True Label, Predicted Label) and count occurrences
+misclassification_matrix = (
+    misclassified_df.groupby(['True Label', 'Predicted Label'])
+    .size()
+    .reset_index(name='Frequency')
+)
+
+# Merge misclassification rates with the matrix
+final_table = pd.merge(
+    misclassification_matrix, 
+    misclassification_rates, 
+    on='True Label'
+)
+
+# Sort the final table by Misclassification Rate (descending) and then by Frequency (optional)
+sorted_by_rate = final_table.sort_values(by=['Misclassification Rate', 'Frequency'], ascending=[False, False])
+
+# Display the final sorted table
+print(sorted_by_rate)
+
+# Optional: Save the final table to a CSV
+# sorted_by_rate.to_csv("misclassification_sorted_by_rate.csv", index=False)
+#%%
+#%%
 # Process misclassified instances
 misclassified_df = pd.read_csv("./knn_misclassifications.csv")  # Load misclassified indices
 misclassified_indices = misclassified_df['Index'].values
@@ -139,25 +255,6 @@ sorted_feature_importances = sorted(feature_importances.items(), key=lambda x: x
 print(sorted_feature_importances)
 #%%
 
-# Top Features Contributing to the Prediction
-explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=10)
-feature_weights = explanation.as_list()
-
-# Extract feature names and corresponding weights
-feature_names = [f"{feature[0]}" for feature in feature_weights]
-feature_values = [feature[1] for feature in feature_weights]
-
-# Create the bar plot
-plt.figure(figsize=(10, 6))
-plt.barh(feature_names, feature_values, color='skyblue')
-plt.xlabel('Weight (Influence on Prediction)')
-plt.title('Top Features Contributing to the Prediction')
-plt.show()
-
-# This explains for a single test instance
-
-#%%
-
 # for correct classifications
 
 # Load the misclassifications CSV
@@ -181,58 +278,6 @@ correct_classifications = pd.read_csv("./knn_correct_classifications.csv")
 
 # Extract numeric part from "True Label"
 correct_classifications["True Label"] = correct_classifications["True Label"].str.extract(r'(\d+)').astype(int)
-correct_classifications.to_csv("./knn_correct_classifications.csv", index=False)
+# correct_classifications.to_csv("./knn_correct_classifications.csv", index=False)
 
 print("Correct classifications saved to 'knn_correct_classifications.csv'")
-#%%
-
-correct_classifications = pd.read_csv("./knn_correct_classifications.csv")
-correct_classifications['True Label'] = correct_classifications['True Label'] - 1
-correct_classifications['Predicted Label'] = correct_classifications['Predicted Label'] - 1
-
-
-# Filter correctly classified class 3
-correct_class3_indices = correct_classifications[(correct_classifications['True Label'] == 3) & (correct_classifications['Predicted Label'] == 3)]['Index'].values
-
-# Filter misclassified: True class 3, Predicted class 4
-misclassified_class3_as4_indices = misclassified_df[
-    (misclassified_df['True Label'] == 3) & (misclassified_df['Predicted Label'] == 4)
-]['Index'].values
-
-# Generate explanations for correctly classified class 3
-correct_feature_importances = {}
-for idx in correct_class3_indices:
-    test_instance = X_test_np[idx]
-    explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=7)
-    for feature, weight in explanation.as_list():
-        correct_feature_importances[feature] = correct_feature_importances.get(feature, 0) + abs(weight)
-
-# Generate explanations for misclassified class 3 -> class 4
-misclassified_feature_importances = {}
-for idx in misclassified_class3_as4_indices:
-    test_instance = X_test_np[idx]
-    explanation = explainer.explain_instance(test_instance, knn_wrapper.predict_proba, num_features=7)
-    for feature, weight in explanation.as_list():
-        misclassified_feature_importances[feature] = misclassified_feature_importances.get(feature, 0) + abs(weight)
-
-# Visualize feature importances
-import matplotlib.pyplot as plt
-
-# Convert to sorted lists
-correct_features, correct_weights = zip(*sorted(correct_feature_importances.items(), key=lambda x: x[1], reverse=True))
-misclassified_features, misclassified_weights = zip(*sorted(misclassified_feature_importances.items(), key=lambda x: x[1], reverse=True))
-#%%
-# Plot
-
-
-# Plot with renamed features
-num_feat = 6
-plt.figure(figsize=(12, 6))
-plt.barh(correct_features[0:num_feat], correct_weights[0:num_feat], color='green', alpha=0.5, label='Correctly Classified Class 3')
-plt.barh(misclassified_features[0:num_feat], misclassified_weights[0:num_feat], color='red', alpha=0.3, label='Misclassified as Class 4')
-plt.xlabel('Feature Importance')
-plt.title('Feature Importance Comparison: Class 3 Correct vs Misclassified as Class 4')
-plt.legend()
-plt.show()
-
-
