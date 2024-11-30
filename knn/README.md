@@ -1,4 +1,4 @@
-# README for KNN Branch
+# K-Nearest Neighbors (KNN) Model
 
 This repository contains the implementation and evaluation of a k-Nearest Neighbors (KNN) classification model. The focus is on explaining model predictions using Local Interpretable Model-agnostic Explanations (LIME) and visualizing the results. Below is a detailed guide on how to reproduce the experiments.
 
@@ -18,27 +18,6 @@ This repository contains the implementation and evaluation of a k-Nearest Neighb
 
 ### Configuration
 - **`requirements.txt`**: List of required Python libraries to set up the environment.
-
-## Setup
-
-### Prerequisites
-- Python 3.8 or higher
-- `pip` package manager
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd <repository-directory>
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Ensure the data files (`knn_correct_classifications.csv` and `knn_misclassifications.csv`) are in the root directory.
 
 ## Reproducing Results
 
@@ -60,8 +39,3 @@ The script `lime_knn.py` generates a bar chart (`lime plot.png`) comparing the f
 ## Notes
 - The scripts assume that the data has been preprocessed and split into training and test sets. Ensure these are correctly defined in the code.
 - Modify paths and parameters in the scripts as needed to match your environment.
-
-
----
-
-For any questions or clarifications, contact [Your Contact Information].
