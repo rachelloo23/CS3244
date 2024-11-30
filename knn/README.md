@@ -61,11 +61,6 @@ The script `lime_knn.py` generates a bar chart (`lime plot.png`) comparing the f
 - The scripts assume that the data has been preprocessed and split into training and test sets. Ensure these are correctly defined in the code.
 - Modify paths and parameters in the scripts as needed to match your environment.
 
-## Contribution
-Feel free to open issues or submit pull requests for improvements or bug fixes.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 
