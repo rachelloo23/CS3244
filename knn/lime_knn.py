@@ -35,6 +35,34 @@ X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
 knn = neighbors.KNeighborsClassifier(n_neighbors = 10, metric='manhattan')
 knn_model = knn.fit(X_train_smote, y_train_smote) 
 
+#%%
+
+# for correct classifications
+
+# Load the misclassifications CSV
+misclassified_df = pd.read_csv("./knn_misclassifications.csv")
+
+# Create a set of misclassified indices for quick lookup
+misclassified_indices = set(misclassified_df["Index"])
+
+# Correctly classified indices are those not in the misclassified set
+correct_indices = [i for i in range(len(y_test)) if i not in misclassified_indices]
+
+# Create a DataFrame for the correctly classified instances
+correct_classifications = pd.DataFrame({
+    "Index": correct_indices,
+    "True Label": [y_test.iloc[i] for i in correct_indices],
+    "Predicted Label": [knn_model.predict(X_test)[i] for i in correct_indices],
+})
+
+# Simulated DataFrame
+correct_classifications = pd.read_csv("./knn_correct_classifications.csv")
+
+# Extract numeric part from "True Label"
+correct_classifications["True Label"] = correct_classifications["True Label"].str.extract(r'(\d+)').astype(int)
+# correct_classifications.to_csv("./knn_correct_classifications.csv", index=False)
+
+print("Correct classifications saved to 'knn_correct_classifications.csv'")
 
 #%%
 # For LIME to work
@@ -158,32 +186,3 @@ plt.title('Feature Importance Comparison (Actual Label: 3): Correctly Classified
 plt.legend()
 plt.show()
 
-
-#%%
-
-# for correct classifications
-
-# Load the misclassifications CSV
-misclassified_df = pd.read_csv("./knn_misclassifications.csv")
-
-# Create a set of misclassified indices for quick lookup
-misclassified_indices = set(misclassified_df["Index"])
-
-# Correctly classified indices are those not in the misclassified set
-correct_indices = [i for i in range(len(y_test)) if i not in misclassified_indices]
-
-# Create a DataFrame for the correctly classified instances
-correct_classifications = pd.DataFrame({
-    "Index": correct_indices,
-    "True Label": [y_test.iloc[i] for i in correct_indices],
-    "Predicted Label": [knn_model.predict(X_test)[i] for i in correct_indices],
-})
-
-# Simulated DataFrame
-correct_classifications = pd.read_csv("./knn_correct_classifications.csv")
-
-# Extract numeric part from "True Label"
-correct_classifications["True Label"] = correct_classifications["True Label"].str.extract(r'(\d+)').astype(int)
-# correct_classifications.to_csv("./knn_correct_classifications.csv", index=False)
-
-print("Correct classifications saved to 'knn_correct_classifications.csv'")
