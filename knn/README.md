@@ -1,71 +1,72 @@
-# K-Nearest Neighbors (KNN) Project
+# README for KNN Branch
 
-This repository contains a project demonstrating the implementation and evaluation of a KNN model for classification. The project includes analysis of correct and misclassified data points and feature importance explanations using LIME.
+This repository contains the implementation and evaluation of a k-Nearest Neighbors (KNN) classification model. The focus is on explaining model predictions using Local Interpretable Model-agnostic Explanations (LIME) and visualizing the results. Below is a detailed guide on how to reproduce the experiments.
 
-## Files in This Repository
-- `knn.py`: Implements the KNN model with hyperparameter tuning.
-- `final_knn_model.py`: Contains the finalized KNN model.
-- `lime_knn.py`: Generates LIME explanations for the model's predictions.
-- `knn_correct_classifications.csv`: Dataset of correctly classified samples.
-- `knn_misclassifications.csv`: Dataset of misclassified samples.
-- `lime_plot.png`: Visualization of feature importances.
+## Files
 
-## Requirements
-- Python 3.9.2
-- Required libraries:
-  ```
-  numpy
-  pandas
-  scikit-learn
-  matplotlib
-  lime
-  ```
-  Install dependencies via `pip install -r requirements.txt`.
+### Python Scripts
+- **`knn.py`**: Contains the implementation of the KNN model, including training and evaluation.
+- **`final_knn_model.py`**: The finalized version of the KNN model, optimized and used for generating results.
+- **`lime_knn.py`**: Script to generate LIME explanations for correctly classified and misclassified instances.
 
-## Data
-- `knn_correct_classifications.csv`: Contains indices and labels of samples classified correctly by the model.
-- `knn_misclassifications.csv`: Contains indices and labels of samples misclassified by the model.
+### Data Files
+- **`knn_correct_classifications.csv`**: CSV file containing indices and labels of correctly classified instances.
+- **`knn_misclassifications.csv`**: CSV file containing indices and labels of misclassified instances.
 
-Ensure these files are located in the project root directory before running the scripts.
+### Visualizations
+- **`lime plot.png`**: A bar chart comparing feature importances for correctly classified and misclassified instances.
 
-## How to Reproduce
-1. **Clone the Repository:**
-   ```
+### Configuration
+- **`requirements.txt`**: List of required Python libraries to set up the environment.
+
+## Setup
+
+### Prerequisites
+- Python 3.8 or higher
+- `pip` package manager
+
+### Installation
+
+1. Clone the repository:
+   ```bash
    git clone <repository-url>
    cd <repository-directory>
    ```
 
-2. **Set Up Environment:**
-   Create a virtual environment and install dependencies:
-   ```
-   python -m venv env
-   source env/bin/activate  # For Linux/Mac
-   env\Scripts\activate     # For Windows
+2. Install dependencies:
+   ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run KNN Model Training:**
-   Execute the KNN training script:
-   ```
-   python knn.py
-   ```
+3. Ensure the data files (`knn_correct_classifications.csv` and `knn_misclassifications.csv`) are in the root directory.
 
-4. **Analyze Feature Importance with LIME:**
-   Generate LIME explanations for correct and misclassified samples:
-   ```
-   python lime_knn.py
-   ```
-   The feature importance visualization will be saved as `lime_plot.png`.
+## Reproducing Results
 
-## Outputs
-- **Model Evaluation:**
-  The script outputs classification metrics, including precision, recall, and F1 scores.
-- **Feature Importance:**
-  LIME-based visualizations provide insights into which features influenced the model's predictions.
+### Step 1: Train and Evaluate the Model
+Run `knn.py` to train the KNN model and evaluate its performance:
+```bash
+python knn.py
+```
+
+### Step 2: Generate LIME Explanations
+Run `lime_knn.py` to generate explanations for correctly classified and misclassified instances:
+```bash
+python lime_knn.py
+```
+
+### Step 3: Visualize Feature Importances
+The script `lime_knn.py` generates a bar chart (`lime plot.png`) comparing the feature importances for correctly classified and misclassified instances. Open the file to view the visualization.
 
 ## Notes
-- Ensure `X_train`, `X_test`, and other data variables are correctly preprocessed before running the scripts.
-- Modify file paths in the scripts if the project directory structure changes.
+- The scripts assume that the data has been preprocessed and split into training and test sets. Ensure these are correctly defined in the code.
+- Modify paths and parameters in the scripts as needed to match your environment.
 
-## Acknowledgments
-This project uses the LIME library for interpretability and scikit-learn for model implementation.
+## Contribution
+Feel free to open issues or submit pull requests for improvements or bug fixes.
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
+For any questions or clarifications, contact [Your Contact Information].
