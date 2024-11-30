@@ -15,7 +15,7 @@ This repository explores two distinct approaches to human activity recognition u
 - [Directory Structure](#directory-structure)
 - [Prerequisites](#prerequisites)
 - [Setup Instructions](#setup-instructions)
-- \
+
 ## Directory Structure
 ```
 .
