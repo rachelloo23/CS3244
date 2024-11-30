@@ -35,12 +35,11 @@ This repository explores two distinct approaches to human activity recognition u
 │   ├── main.py                                 # Main script for feature engineering
 │   ├── high_corr_features_8.csv                # Highly correlated features (>0.8)
 │   ├── high_corr_features_9.csv                # Highly correlated features (>0.9)
-├── models/
-│   ├── knn/                                    # k-Nearest Neighbors 
-│   ├── decision_tree/                          # Decision Tree implementation
-│   ├── random_forest/                          # Random Forest implementation
-│   ├── gradient_boosting/                      # Gradient Boosting implementation
-│   ├── deep_learning/                          # LSTM Deep Learning implementation
+├── knn/                                        # k-Nearest Neighbors
+├── decision_tree/                              # Decision Tree implementation
+├── random_forest/                              # Random Forest implementation
+├── gradient_boosting/                          # Gradient Boosting implementation
+├── deep_learning/                              # LSTM Deep Learning implementation
 ├── scripts/                                    # Utility scripts
 │   ├── cs3244_eda.py                           # Script for exploratory data analysis (EDA)
 │   └── preprocess.py                           # Script for data preprocessing
