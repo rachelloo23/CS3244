@@ -219,7 +219,7 @@ explanation = explainer.explain_instance(
 )
 correct_feature_importances = {}
 for feature, weight in explanation.as_list():
-    correct_feature_importances[feature] = correct_feature_importances.get(feature, 0) + abs(weight)
+    correct_feature_importances[feature] = correct_feature_importances.get(feature, 0) + weight
 
 # Step 2: Generate explanation for the correctly classified row
 explanation = explainer.explain_instance(
@@ -230,7 +230,7 @@ explanation = explainer.explain_instance(
 # Generate explanations for misclassified class 3 -> class 4
 misclassified_feature_importances = {}
 for feature, weight in explanation.as_list():
-    misclassified_feature_importances[feature] = misclassified_feature_importances.get(feature, 0) + abs(weight)
+    misclassified_feature_importances[feature] = misclassified_feature_importances.get(feature, 0) + weight
 
 
 
@@ -251,4 +251,7 @@ plt.title('Feature Importance Comparison: Class 3 Correct vs Misclassified as Cl
 plt.legend()
 # Adjust the left margin
 plt.subplots_adjust(left=0.25)  # Increase the left margin (default is ~0.125)
+# Save the plot as a PNG file
+plt.savefig("Lime_actual3_predicted4.png", dpi=300, bbox_inches="tight")
+
 plt.show()
