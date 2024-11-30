@@ -2,7 +2,7 @@
 
 This repository explores two distinct approaches to human activity recognition using the [**UCI Human Activity Recognition (HAR)** dataset](https://archive.ics.uci.edu/dataset/341/smartphone+based+recognition+of+human+activities+and+postural+transitions). The project investigates the performance trade-offs between traditional machine learning methods leveraging expert-processed features and deep learning models applied directly to raw time-series data.
 
-## Objectives
+## Methodology
 
 1. **Traditional Machine Learning with Expert Features**:  
    This approach uses the preprocessed UCI HAR dataset, enriched with domain-specific feature engineering by experts. Models such as k-Nearest Neighbors (kNN), Decision Trees, and Random Forests are applied to evaluate their effectiveness in leveraging structured data.
@@ -36,27 +36,11 @@ This repository explores two distinct approaches to human activity recognition u
 │   ├── high_corr_features_8.csv                # Highly correlated features (>0.8)
 │   ├── high_corr_features_9.csv                # Highly correlated features (>0.9)
 ├── models/
-│   ├── knn/                                    # k-Nearest Neighbors implementation
-│   │   ├── knn.py                              # Main kNN implementation
-│   │   └── results/                            # Results and logs for kNN
+│   ├── knn/                                    # k-Nearest Neighbors 
 │   ├── decision_tree/                          # Decision Tree implementation
-│   │   ├── decision_tree.py                    # Main Decision Tree implementation
-│   │   └── results/                            # Results and logs for Decision Tree
 │   ├── random_forest/                          # Random Forest implementation
-│   │   ├── random_forest.py                    # Main Random Forest implementation
-│   │   └── results/                            # Results and logs for Random Forest
 │   ├── gradient_boosting/                      # Gradient Boosting implementation
-│   │   ├── config/                             # Configuration files for the model
-│   │   │   ├── config.yaml                     # Optimal hyperparameters
-│   │   ├── main.py                             # Main Gradient Boosting script
-│   │   ├── tune.py                             # Hyperparameter tuning script
-│   │   └── results/                            # Results and logs for Gradient Boosting
-│   │       ├── xgb_tune_results.csv            # Results from pre-standardization tuning
-│   │       └── xgb_tune_results_2.csv          # Results from post-standardization tuning
-│   ├── deep_learning/
-│   │   └── lstm/                               # Long Short-Term Memory (LSTM) implementation
-│   │       ├── lstm.py                         # Main LSTM implementation
-│   │       └── results/                        # Results and logs for LSTM
+│   ├── deep_learning/                          # LSTM Deep Learning implementation
 ├── scripts/                                    # Utility scripts
 │   ├── cs3244_eda.py                           # Script for exploratory data analysis (EDA)
 │   └── preprocess.py                           # Script for data preprocessing
