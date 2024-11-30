@@ -110,64 +110,6 @@ y_pred = random_search.best_estimator_.predict(X_test_selected)
 from sklearn.metrics import classification_report
 print(classification_report(y_train, random_search.best_estimator_.predict(X_train_selected) , digits=5))
 print(classification_report(y_test, y_pred, digits=5))
-# Best hyperparameters found:  {'classifier__min_samples_split': np.int64(5), 'classifier__min_samples_leaf': np.int64(9), 'classifier__max_features': None, 'classifier__max_depth': 40, 'classifier__criterion': 'entropy'}
-#              precision    recall  f1-score   support
-#
-#           1       0.84      0.93      0.88       496
-#           2       0.83      0.81      0.82       471
-#           3       0.85      0.79      0.82       420
-#           4       0.83      0.80      0.81       508
-#           5       0.82      0.88      0.85       556
-#           6       1.00      1.00      1.00       545
-#           7       0.50      0.70      0.58        23
-#           8       0.75      0.30      0.43        10
-#           9       0.47      0.53      0.50        32
-#          10       0.47      0.32      0.38        25
-#          11       0.65      0.27      0.38        49
-#          12       0.50      0.59      0.54        27
-#
-#    accuracy                           0.85      3162
-#   macro avg       0.71      0.66      0.67      3162
-#weighted avg       0.85      0.85      0.85      3162
-# %%
-misclassified_indices = [i for i, (true, pred) in enumerate(zip(y_test.values.ravel(), y_pred)) if true != pred]
-print("Misclassified instances:")
-for i in misclassified_indices:
-    print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}, Features: {X_test.iloc[i].values}")
-
-print("Misclassified labels and index:")
-for i in misclassified_indices:
-    print(f"Index: {i}, True label: {y_test.iloc[i, 0]}, Predicted label: {y_pred[i]}")
-#Misclassified instances:
-#Index: 13, True label: 5, Predicted label: 4, Features: [ 0.03570833 -0.01327702 -0.02055589 -0.99698625 -0.99067633 -0.99166519
-# -0.99739269 -0.991612   -0.99324678 -0.80088366 -0.75537678 -0.71577542
-#  0.83516416  0.6961986   0.66923863 -0.991762   -0.99997119 -0.99976327
-# -0.99991594 -0.99702084 -0.99387578 -0.99365765 -0.88373493 -0.95034677
-# -0.62757074  0.43730913 -0.24972741  0.26422063 -0.43862627  0.05804684
-# -0.09057449  0.13833332 -0.01153947  0.49535705 -0.26459948  0.12206139
-#  0.1994329   0.39889068  0.09050956  0.14431142  0.91983955 -0.31433982
-#  0.12916605 -0.99422291 -0.9841596  -0.99577134 -0.99444199 -0.98479805
-# -0.99626316  0.84993008 -0.33507065  0.12178876  0.94071289 -0.29327567
-#  0.13002227  0.07127618  0.78746973 -0.82391987 -0.96990246 -0.99524098
-# -0.98705492 -0.99809306 -0.93170162 -1.         -0.91257575 -0.26981917
-#  0.27972083 -0.29027056  0.30145549 -0.03034419  0.04560765 -0.06313135
-#  0.08133712 -0.44324844  0.46342426 -0.48374158  0.50334883  0.99279759
-#  0.62429382  0.7135155   0.07917393  0.01849573 -0.02170381 -0.99361731
-# -0.98564396 -0.99061427 -0.99343543 -0.98352596 -0.98928107 -0.99081662
-# -0.99290962 -0.99103895  0.99551573  0.98264569  0.99255188 -0.99128992
-# -0.99993614 -0.9997592  -0.99981728 -0.99173852 -0.9798149  -0.9862259
-# -0.76690966 -0.68048265 -0.70593407  0.54858194  0.03258288  0.6597768
-# 0.44242367  0.11121481  0.00807146  0.1613651   0.33455164  0.23461794
-#  0.01659009  0.06927747  0.41146424  0.12555833  0.39768376 -0.0830022
-# -0.02694173 -0.01717211 -0.07548552 -0.99388721 -0.98818963 -0.98593764
-# -0.9945141  -0.98973157 -0.98685478 -0.90680874 -0.95116417 -0.75812223
-#  0.84808895  0.88753192  0.82019171 -0.98899218 -0.99997238 -0.99989508
-# -0.99984717 -0.99509182 -0.99057375 -0.9898564  -0.47782302 -0.30252804
-#...
-#Index: 3113, True label: 3, Predicted label: 1
-#Index: 3114, True label: 2, Predicted label: 3
-#Index: 3154, True label: 2, Predicted label: 1
-#Index: 3160, True label: 2, Predicted label: 1
 
 # %%
 from sklearn.feature_selection import RFECV

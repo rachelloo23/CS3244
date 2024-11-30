@@ -69,24 +69,6 @@ pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
 print(classification_report(y_train,pipeline.predict(X_train) , digits=5))
 print(classification_report(y_test, y_pred, digits=5))
-# precision    recall  f1-score   support
-
-#           1       0.77      0.89      0.82       496
-#           2       0.80      0.72      0.76       471
-#           3       0.84      0.79      0.81       420
-#           4       0.86      0.78      0.82       508
-#           5       0.81      0.87      0.84       556
-#           6       0.99      0.98      0.99       545
-#           7       0.58      0.61      0.60        23
-#           8       1.00      0.90      0.95        10
-#           9       0.55      0.56      0.55        32
-#          10       0.59      0.76      0.67        25
-#          11       0.58      0.57      0.58        49
-#          12       0.67      0.59      0.63        27
-#
-#    accuracy                           0.83      3162
-#   macro avg       0.75      0.75      0.75      3162
-#weighted avg       0.83      0.83      0.83      3162
 # %%
 misclassified_indices = [i for i, (true, pred) in enumerate(zip(y_test.values.ravel(), y_pred)) if true != pred]
 print("Misclassified instances:")

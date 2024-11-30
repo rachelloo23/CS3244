@@ -95,25 +95,5 @@ y_pred = random_search.best_estimator_.predict(X_test)
 from sklearn.metrics import classification_report
 print(classification_report(y_train,random_search.best_estimator_.predict(X_train),digits = 5))
 print(classification_report(y_test, y_pred, digits = 5))
-# %%
-# Results
-#Best hyperparameters found:  {'classifier__min_samples_split': np.int64(6), 'classifier__min_samples_leaf': np.int64(6), 'classifier__max_features': None, 'classifier__max_depth': None, 'classifier__criterion': 'entropy'}
-#              precision    recall  f1-score   support
-#
-#           1       0.79      0.91      0.85       496
-#           2       0.81      0.67      0.73       471
-#           3       0.81      0.83      0.82       420
-#           4       0.81      0.79      0.80       508
-#           5       0.81      0.85      0.83       556
-#           6       1.00      0.99      0.99       545
-#           7       0.75      0.52      0.62        23
-#           8       0.69      0.90      0.78        10
-#           9       0.64      0.72      0.68        32
-#          10       0.52      0.44      0.48        25
-#          11       0.64      0.59      0.62        49
-#          12       0.50      0.44      0.47        27
-#
-#    accuracy                           0.83      3162
-#   macro avg       0.73      0.72      0.72      3162
-#weighted avg       0.83      0.83      0.83      3162
+
 
