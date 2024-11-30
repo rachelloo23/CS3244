@@ -1,0 +1,62 @@
+# Run 1
+Test Loss: 0.6142633557319641
+Test Accuracy: 0.854651153087616
+Test AUC: 0.9707443714141846
+Test F1 Micro (from metrics): 0.8546510934829712
+Test F1 Macro (from metrics): 0.8528103828430176
+Test F1 Weighted (from metrics): 0.8541645407676697
+
+Confusion Matrix:
+[[19  1  6  0  0  0]
+ [ 0 32  5  0  0  0]
+ [ 2  0 35  0  0  0]
+ [ 1  0  0 21  2  0]
+ [ 2  0  2  4 16  0]
+ [ 0  0  0  0  0 24]]
+F1 Score (Micro): 0.8546511627906976
+F1 Score (Macro): 0.8528104575163399
+F1 Score (Weighted): 0.8541645495407465
+
+# Run 2
+Test Loss: 0.6908001899719238
+Test Accuracy: 0.7558139562606812
+Test AUC: 0.9623512625694275
+Test F1 Micro (from metrics): 0.7558138966560364
+Test F1 Macro (from metrics): 0.7447168231010437
+Test F1 Weighted (from metrics): 0.7450250387191772
+
+Confusion Matrix:
+[[ 9  7 10  0  0  0]
+ [ 6 27  4  0  0  0]
+ [ 1  1 35  0  0  0]
+ [ 0  0  0 18  6  0]
+ [ 1  2  0  4 17  0]
+ [ 0  0  0  0  0 24]]
+F1 Score (Micro): 0.755813953488372
+F1 Score (Macro): 0.744716803372656
+F1 Score (Weighted): 0.745025062926231
+
+# 12 classes - Run 1
+Test Loss: 0.6103991866111755
+Test Accuracy: 0.9300411343574524
+Test AUC: 0.9782677292823792
+Test F1 Micro (from metrics): 0.9300410747528076
+Test F1 Macro (from metrics): 0.9164367318153381
+Test F1 Weighted (from metrics): 0.9297761917114258
+
+Confusion Matrix:
+[[23  0  2  0  0  0  0  0  0  0  0  0]
+ [ 1 36  0  0  0  0  0  0  0  0  0  0]
+ [ 0  0 37  0  0  0  0  0  0  0  0  0]
+ [ 0  0  0 22  2  0  0  0  0  0  0  0]
+ [ 0  0  0  3 21  0  0  0  0  0  0  0]
+ [ 0  0  0  0  0 23  0  0  1  0  0  0]
+ [ 1  0  0  0  0  0 10  1  0  0  0  0]
+ [ 0  0  0  0  0  0  0 11  0  0  0  1]
+ [ 0  0  0  0  0  0  0  0 12  0  0  0]
+ [ 0  0  0  0  0  0  0  0  0 12  0  0]
+ [ 1  0  0  0  0  0  0  0  1  0 10  0]
+ [ 0  0  0  0  0  0  0  0  0  3  0  9]]
+F1 Score (Micro): 0.9300411522633745
+F1 Score (Macro): 0.9164368407420462
+F1 Score (Weighted): 0.9297762554861354

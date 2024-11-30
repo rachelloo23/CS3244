@@ -1,0 +1,21 @@
+# Hyperparameters
+
+# Pre-standardization
+# n_estimators: 37
+# max_depth: 11
+# learning_rate: 0.07743148807027894
+# subsample: 0.7420549200544598
+# colsample_bytree: 0.8999013190460016
+# gamma: 2.335146525850379e-07
+# reg_alpha: 0.005344647514524659
+# reg_lambda: 0.12400234913359398
+
+# Post-standardization
+n_estimators: 36
+max_depth: 12
+learning_rate: 0.12474296031912813
+subsample: 0.9327960051965614
+colsample_bytree: 0.9000321078761967
+gamma: 5.6758448830470336e-05
+reg_alpha: 0.08681503874329112
+reg_lambda: 1.7151544620195545e-06
