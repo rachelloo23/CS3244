@@ -12,7 +12,6 @@ from sklearn.svm import SVC
 # %%
 train = pd.read_csv("../data/processed/train.csv")
 test = pd.read_csv("../data/processed/test.csv")
-print(train.head())
 print(test.head())
 # %%
 train = train.drop(["id"], axis=1)

@@ -33,7 +33,7 @@ build/
 *.whl
 
 # Model files
-# models/*/results/
+random_forest/log_rf/*
 
 # Configurations
 # config.yaml
