@@ -1,7 +1,4 @@
-The random forest branch is organised by folders
-
 ## Structure of the random forest branch:     
- 
 ### Models:    
 Contains 4 version of random forest models:    
 base_model.py    
@@ -32,4 +29,20 @@ misclassified_instances.csv
 ### tuning_results
 Contains all the tuning results as csv files from the 4 models
 
+## Reproducing Results
+
+### Step 1: Train and Evaluate the Model
+Run `base_model.py` or any of the files in the Models folder to train the random forest model and evaluate its performance:
+```bash
+python base_model.py
+```
+
+### Step 2: Generate LIME Explanations
+Run `misclassification_report.py` in the Misclassification_report folder to generate explanations for correctly classified and misclassified instances:
+```bash
+python misclassification_report.py
+```
+
+### Step 3: Visualize Feature Importances
+The script `misclassification_report.py` generates a bar chart (`Lime_actual3_predicted4.png`) comparing the feature importances for correctly classified and misclassified instances. Open the file to view the visualization.
 
