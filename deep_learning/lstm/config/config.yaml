@@ -1,0 +1,21 @@
+# Hyperparameters
+
+# # 6-class lstm
+# lstm_units: 102
+# batch_size: 21
+# dropout_rate: 0.5598117664813230
+# epochs: 75
+
+# 12-class lstm model 1
+lstm_units: 63
+batch_size: 38
+dropout_rate: 0.47116386376438200
+epochs: 100
+learning_rate: 0.020917981586741000
+
+# # 12-class lstm model 2
+# lstm_units: 97
+# batch_size: 20
+# dropout_rate: 0.5858767880681160
+# epochs: 100
+# learning_rate: 0.024576037406308500

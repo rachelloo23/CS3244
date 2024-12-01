@@ -14,6 +14,8 @@ from ray.train import RunConfig
 from ray.tune.schedulers import ASHAScheduler
 from ray.air import session
 from xgboost import XGBClassifier
+from module import writeResults
+from imblearn.over_sampling import SMOTE
 # %%
 #Set random seed
 random_seed = 31
@@ -26,18 +28,14 @@ test = pd.read_csv("../data/processed/test.csv")
 print(train.head())
 print(test.head())
 # %%
-train = train.drop(["id"], axis=1)
-test = test.drop(["id"], axis=1)
-print(train.head())
-print(test.head())
-# %%
 # Split the data into X (features) and y (labels)
 X_train = train.drop(["label"], axis=1)
 y_train = train["label"]
 y_train = y_train - 1
 y_test = test["label"] - 1
 X_test = test.drop(["label"], axis=1)
-
+smote = SMOTE(random_state=random_seed)
+X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
 # %%
 param_dist_xgb = {
     "n_estimators": tune.randint(10, 40),
@@ -53,8 +51,13 @@ param_dist_xgb = {
 # Define the XGBoost model
 ray.shutdown()
 ray.init()
+X_train_smote_ref = ray.put(X_train_smote)
+y_train_smote_ref = ray.put(y_train_smote)
 def objective_xgb(config):
+    X_train_smote, y_train_smote = ray.get(X_train_smote_ref), ray.get(y_train_smote_ref)
     model = XGBClassifier(
+        objective='multi:softmax',
+        eval_metric='mlogloss',
         n_estimators=config["n_estimators"],
         max_depth=config["max_depth"],
         learning_rate=config["learning_rate"],
@@ -67,7 +70,7 @@ def objective_xgb(config):
     )
     scalar = StandardScaler()
     pipeline = Pipeline([('transformer', scalar), ('estimator', model)])
-    scores = cross_val_score(pipeline, X_train, y_train, cv=10, scoring=make_scorer(f1_score, average='micro'))
+    scores = cross_val_score(pipeline, X_train_smote, y_train_smote, cv=10, scoring=make_scorer(f1_score, average='weighted'))
     session.report({'f1':scores.mean()})
 # %%
 # Run the hyperparameter search for XGBClassifier
@@ -77,10 +80,10 @@ analysis_xgb = tune.Tuner(
     metric="f1",
     mode="max",
     scheduler=ASHAScheduler(),
-    num_samples=50,
+    num_samples=100,
     ),
     param_space=param_dist_xgb,
-    run_config=RunConfig(storage_path=os.path.abspath("log"), name="xgb_trial_2", log_to_file=True)
+    run_config=RunConfig(storage_path=os.path.abspath("log"), name="xgb_trial_5", log_to_file=True)
 )
 
 # %%
@@ -93,7 +96,7 @@ best_config_xgb = best_result_xgb.config
 # %%
 print("Best hyperparameters for XGBClassifier: ", best_config_xgb)
 print("Best F1 score for XGBClassifier: ", best_result_xgb)
-xgb_df.to_csv("xgb_tune_results_2.csv", index=False)
+xgb_df.to_csv("xgb_tune_results_5.csv", index=False)
 # Shutdown Ray
 ray.shutdown()
 # %%

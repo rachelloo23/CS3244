@@ -1,66 +1,52 @@
-# CS3244 - Machine Learning Model Comparison
-This repository contains implementations of various machine learning models for the CS3244 project. The objective is to compare traditional machine learning algorithms with deep learning models, evaluating their performance on a shared dataset.
+# CS3244 - Machine Learning Project
+
+This repository explores two distinct approaches to human activity recognition using the [**UCI Human Activity Recognition (HAR)** dataset](https://archive.ics.uci.edu/dataset/341/smartphone+based+recognition+of+human+activities+and+postural+transitions). The project investigates the performance trade-offs between traditional machine learning methods leveraging expert-processed features and deep learning models applied directly to raw time-series data.
+
+## Methodology
+
+1. **Traditional Machine Learning with Expert Features**:  
+   This approach uses the preprocessed UCI HAR dataset, enriched with domain-specific feature engineering by experts. Models such as k-Nearest Neighbors (kNN), Decision Trees, and Random Forests are applied to evaluate their effectiveness in leveraging structured data.
+
+2. **Deep Learning on Raw Time-Series Data**:  
+   A deep learning approach, particularly using Long Short-Term Memory (LSTM) networks, processes raw time-series data without requiring manual feature engineering. This end-to-end learning paradigm allows the model to autonomously extract features and learn temporal dependencies.
+
 ## Table of Contents
 
 - [Directory Structure](#directory-structure)
 - [Prerequisites](#prerequisites)
 - [Setup Instructions](#setup-instructions)
-- [Models](#models)
-- [Data Preprocessing](#data-preprocessing)
-- [Configuration](#configuration)
-- [Results](#results)
+
 ## Directory Structure
 ```
 .
 ├── data/
-│   ├── activity_labels.txt
-│   ├── features.txt
-|   └── features_info.txt
-│   ├── processed/
-    │   ├── train_8.csv                         # Train set of selected features based on threshold > 0.8
-    │   ├── train_9.csv                         # Train set of selected features based on threshold > 0.9
-    │   ├── test_8.csv                          # Test set of selected features based on threshold > 0.8
-    │   ├── test_9.csv                          # Test set of selected features based on threshold > 0.9
+│   ├── RawData/                                # Raw data from UCI HAR dataset
+│   ├── Test/                                   # Testing dataset
+│   ├── Train/                                  # Training dataset
+│   ├── processed/                              # Processed datasets with selected features
+│   │   ├── train_8.csv                         # Train set (threshold > 0.8)
+│   │   ├── train_9.csv                         # Train set (threshold > 0.9)
+│   │   ├── test_8.csv                          # Test set (threshold > 0.8)
+│   │   ├── test_9.csv                          # Test set (threshold > 0.9)
+│   ├── activity_labels.txt                     # Activity label descriptions
+│   ├── features.txt                            # Feature names
+│   └── features_info.txt                       # Description of features
 ├── feature_engineering/
-│   ├── main.py                                 # Main code file for feature engineering
-│   ├── high_corr_features_8.csv                # Highly correlated features of threshold > 0.8                 
-│   ├── high_corr_features_9.csv                # Highly correlated features of threshold > 0.8                   
-├── models/
-│   ├── knn/                                    # k-Nearest Neighbors implementation
-│   │   ├── knn.py
-│   │   └── results/                            # Results and logs for kNN
-│   ├── decision_tree/                          # Decision Tree implementation
-│   │   ├── decision_tree.py
-│   │   └── results/                            # Results and logs for Decision Tree
-│   ├── random_forest/                          # Random Forest implementation
-│   │   ├── random_forest.py
-│   │   └── results/                            # Results and logs for Random Forest
-│   ├── gradient_boosting/                      # Gradient Boosting implementation
-│   │   ├── config/           
-    │   │   ├── config.yaml                     # Optimal hyperparameters of the model at different stages
-│   │   ├── main.py                             # Main code file to run the result
-│   │   ├── tune.py                             # Tune the model
-│   │   └── results/                            # Results and logs for Gradient Boosting
-    │   │   ├── xgb_tune_results.csv            # Results of tuning pre-standardising
-    │   │   ├── xgb_tune_results_2.csv          # Results of tuning post-standardising
-  ├── deep_learning/
-│   │   ├── cnn/                                # Convolutional Neural Network (CNN) implementation
-│   │   │   ├── cnn.py
-│   │   │   └── results/                        # Results and logs for CNN
-│   │   ├── lstm/                               # Long Short-Term Memory (LSTM) implementation
-│   │   │   ├── lstm.py
-│   │   │   └── results/                        # Results and logs for LSTM
-│   │   ├── autoencoder/                        # Autoencoder implementation
-│   │   │   ├── autoencoder.py
-│   │   │   └── results/                        # Results and logs for Autoencoder
-├── notebooks/                                  # Jupyter notebooks for experimentation
-├── scripts/                                    # Utility scripts for preprocessing, evaluation
-│   ├── preprocess.py                           # Script for data preprocessing
-│   ├── evaluation.py                           # Script for evaluation metrics
-├── README.md                                   # This file
-├── .gitignore
-├── requirements.txt          
-└── config.yaml                                 # Configuration file for hyperparameters
+│   ├── main.py                                 # Main script for feature engineering
+│   ├── high_corr_features_8.csv                # Highly correlated features (>0.8)
+│   ├── high_corr_features_9.csv                # Highly correlated features (>0.9)
+├── knn/                                        # k-Nearest Neighbors
+├── decision_tree/                              # Decision Tree implementation
+├── random_forest/                              # Random Forest implementation
+├── gradient_boosting/                          # Gradient Boosting implementation
+├── deep_learning/                              # LSTM Deep Learning implementation
+├── scripts/                                    # Utility scripts
+│   ├── cs3244_eda.py                           # Script for exploratory data analysis (EDA)
+│   └── preprocess.py                           # Script for data preprocessing
+├── README.md                                   # Project description and usage guide
+├── .gitignore                                  # Files and directories to be ignored by Git
+└── requirements.txt                            # Python dependencies
+
 ```
 ## Prerequisites
 Before setting up the project, make sure you have the following installed:
@@ -97,25 +83,5 @@ To start working in the Conda environment, use the following command:
 ```
 conda activate CS3244
 ```
-When you're done and want to exit the environment, use:
-```
-conda deactivate
-```
-### 5. (Optional) Interactive Mode with JupyterLab
-If you want to use an interactive environment, you can launch JupyterLab by running the following command:
-```
-jupyter lab
-```
-After executing this command, you should see output similar to the following in your terminal:
-```
-    To access the server, open this file in a browser:
-        <YOUR_COMPUTER>/jupyter/runtime/<JUPYTER_SERVER>.html
-    Or copy and paste one of these URLs:
-        http://localhost:<PORT>/lab?token=<TOKEN_SEQ>
-        http://127.0.0.1:<PORT>/lab?token=<TOKEN_SEQ>
-```
-To connect to JupyterLab, open a browser and copy the URL that looks like this:
-```
-http://localhost:<PORT>/lab?token=<TOKEN_SEQ>
-```
-Paste it into your browser’s address bar to access the JupyterLab interface.
+
+
